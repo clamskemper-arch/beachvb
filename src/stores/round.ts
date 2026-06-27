@@ -85,7 +85,16 @@ export const useRoundStore = defineStore('rounds', {
 
     finishRound(roundId: RoundID) {
       const round = this.rounds[roundId]
-      if (round) round.status = 'finished'
+      if (!round) return
+      round.status = 'finished'
+
+      const sitOutCounts: Record<string, number> = {}
+      Object.values(this.rounds).forEach((r) => {
+        r.sittingOutPlayerIds.forEach((pid) => {
+          sitOutCounts[pid] = (sitOutCounts[pid] ?? 0) + 1
+        })
+      })
+      this.generate(sitOutCounts)
     },
 
     reset() {

@@ -24,18 +24,11 @@ const currentRound = computed(() => roundStore.currentRound)
 const matches = computed(() =>
   currentRound.value ? matchStore.byRound(currentRound.value.id) : [],
 )
-const allDone = computed(() =>
-  currentRound.value ? matchStore.allFinishedInRound(currentRound.value.id) : false,
-)
 const activeCount = computed(() => playerStore.activePlayers.length)
 const minNeeded = computed(() => (tournamentStore.config?.teamSize ?? 2) * 2)
 const canGenerate = computed(() => activeCount.value >= minNeeded.value)
 
 function generateRound() {
-  roundStore.generate(sitOutCounts.value)
-}
-
-function nextRound() {
   roundStore.generate(sitOutCounts.value)
 }
 
@@ -80,20 +73,11 @@ function finishTournament() {
         />
       </div>
 
-      <div v-if="allDone" class="flex flex-col gap-3 pt-2">
-        <template v-if="canGenerate">
-          <AppButton size="lg" full-width @click="nextRound">
-            Nächste Runde starten →
-          </AppButton>
-        </template>
-        <div v-else class="rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-600 text-center">
-          Zu wenige aktive Spieler für eine neue Runde. Spieler aktivieren oder hinzufügen.
-        </div>
-        <AppButton variant="ghost" full-width @click="showFinishConfirm = true">
-          Turnier beenden
-        </AppButton>
+      <div v-if="currentRound.status === 'finished' && !canGenerate" class="rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-600 text-center">
+        Zu wenige aktive Spieler für eine neue Runde. Spieler aktivieren oder hinzufügen.
       </div>
-      <div v-else class="pt-2">
+
+      <div class="pt-2">
         <AppButton variant="ghost" full-width @click="showFinishConfirm = true">
           Turnier beenden
         </AppButton>
