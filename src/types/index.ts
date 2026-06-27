@@ -27,7 +27,7 @@ export interface Match {
   finishedAt: number | null
 }
 
-export type RoundStatus = 'active' | 'finished'
+export type RoundStatus = 'pending' | 'active' | 'finished'
 
 export interface Round {
   id: RoundID

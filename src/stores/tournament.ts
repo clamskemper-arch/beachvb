@@ -32,6 +32,12 @@ export const useTournamentStore = defineStore('tournament', {
       this.tournament?.roundIds.push(roundId)
     },
 
+    removeRound(roundId: string) {
+      if (this.tournament) {
+        this.tournament.roundIds = this.tournament.roundIds.filter((id) => id !== roundId)
+      }
+    },
+
     addPlayer(playerId: string) {
       this.tournament?.playerIds.push(playerId)
     },

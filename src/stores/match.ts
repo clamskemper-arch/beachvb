@@ -58,6 +58,10 @@ export const useMatchStore = defineStore('matches', {
       }
     },
 
+    deleteMatch(matchId: MatchID) {
+      delete this.matches[matchId]
+    },
+
     reset() {
       this.matches = {}
     },

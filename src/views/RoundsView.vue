@@ -42,8 +42,8 @@ function teamNames(teamId: string): string {
       >
         <div class="flex items-center gap-3">
           <span class="font-bold text-stone-700">Runde {{ round.number }}</span>
-          <AppBadge :variant="round.status === 'finished' ? 'success' : 'warning'">
-            {{ round.status === 'finished' ? 'Fertig' : 'Läuft' }}
+          <AppBadge :variant="round.status === 'finished' ? 'success' : round.status === 'active' ? 'warning' : 'muted'">
+            {{ round.status === 'finished' ? 'Fertig' : round.status === 'active' ? 'Läuft' : 'Geplant' }}
           </AppBadge>
         </div>
         <span class="text-stone-400 text-sm">

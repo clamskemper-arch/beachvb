@@ -20,15 +20,18 @@ export const useRoundStore = defineStore('rounds', {
   getters: {
     all: (state) => Object.values(state.rounds).sort((a, b) => a.number - b.number),
     currentRound(state): Round | null {
-      const all = Object.values(state.rounds)
-      if (!all.length) return null
-      return all.reduce((a, b) => (a.number > b.number ? a : b))
+      return Object.values(state.rounds).find((r) => r.status === 'active') ?? null
+    },
+    pendingRounds(state): Round[] {
+      return Object.values(state.rounds)
+        .filter((r) => r.status === 'pending')
+        .sort((a, b) => a.number - b.number)
     },
     teamById: (state) => (id: string) => state.teams[id],
   },
 
   actions: {
-    generate() {
+    schedulePendingRounds(extend = false) {
       const playerStore = usePlayerStore()
       const matchStore = useMatchStore()
       const tournamentStore = useTournamentStore()
@@ -39,58 +42,103 @@ export const useRoundStore = defineStore('rounds', {
       const activePlayers = playerStore.activePlayers.map((p) => p.id)
       if (activePlayers.length < config.teamSize * 2) return
 
-      const allRounds = Object.values(this.rounds).sort((a, b) => a.number - b.number)
-      const lastRound = allRounds.length > 0 ? allRounds[allRounds.length - 1] : null
-      const lastSittingOut = lastRound?.sittingOutPlayerIds ?? []
+      // Delete all existing pending rounds
+      Object.values(this.rounds)
+        .filter((r) => r.status === 'pending')
+        .forEach((r) => {
+          r.matchIds.forEach((mid) => matchStore.deleteMatch(mid))
+          Object.keys(this.teams).forEach((tid) => {
+            if (this.teams[tid].roundId === r.id) delete this.teams[tid]
+          })
+          tournamentStore.removeRound(r.id)
+          delete this.rounds[r.id]
+        })
 
+      // Build state from finished rounds
+      const finishedRounds = Object.values(this.rounds)
+        .filter((r) => r.status === 'finished')
+        .sort((a, b) => a.number - b.number)
+
+      const gamesPlayed: Record<string, number> = {}
       const sitOutCounts: Record<string, number> = {}
-      Object.values(this.rounds).forEach((r) => {
+
+      finishedRounds.forEach((r) => {
+        const sittingSet = new Set(r.sittingOutPlayerIds)
+        r.activePlayerSnapshot.forEach((pid) => {
+          if (!sittingSet.has(pid)) gamesPlayed[pid] = (gamesPlayed[pid] ?? 0) + 1
+        })
         r.sittingOutPlayerIds.forEach((pid) => {
           sitOutCounts[pid] = (sitOutCounts[pid] ?? 0) + 1
         })
       })
 
-      const { teams: teamGroups, sittingOut } = generateRound(
-        activePlayers,
-        config.teamSize,
-        sitOutCounts,
-        lastSittingOut,
-      )
+      activePlayers.forEach((pid) => { if (!(pid in gamesPlayed)) gamesPlayed[pid] = 0 })
 
-      const roundNumber = Object.values(this.rounds).length + 1
-      const roundId = crypto.randomUUID()
+      const base = Math.max(1, config.minGamesPerPlayer)
+      const currentMin = activePlayers.length > 0
+        ? Math.min(...activePlayers.map((pid) => gamesPlayed[pid] ?? 0))
+        : 0
+      const target = extend && currentMin >= base ? currentMin + base : base
 
-      const createdTeams: Team[] = teamGroups.map((playerIds) => ({
-        id: crypto.randomUUID(),
-        roundId,
-        playerIds,
-      }))
+      let lastSittingOut = finishedRounds[finishedRounds.length - 1]?.sittingOutPlayerIds ?? []
+      let roundNumber = finishedRounds.length + 1
 
-      createdTeams.forEach((t) => {
-        this.teams[t.id] = t
-      })
+      // Generate rounds until all active players have reached target
+      for (let i = 0; i < 100; i++) {
+        if (activePlayers.every((pid) => (gamesPlayed[pid] ?? 0) >= target)) break
 
-      const matchIds: string[] = []
-      for (let i = 0; i + 1 < createdTeams.length; i += 2) {
-        const matchId = matchStore.create(roundId, createdTeams[i].id, createdTeams[i + 1].id)
-        matchIds.push(matchId)
+        const { teams: teamGroups, sittingOut } = generateRound(
+          activePlayers,
+          config.teamSize,
+          sitOutCounts,
+          lastSittingOut,
+        )
+
+        const sittingSet = new Set(sittingOut)
+        activePlayers.forEach((pid) => {
+          if (!sittingSet.has(pid)) gamesPlayed[pid] = (gamesPlayed[pid] ?? 0) + 1
+        })
+        sittingOut.forEach((pid) => { sitOutCounts[pid] = (sitOutCounts[pid] ?? 0) + 1 })
+        lastSittingOut = sittingOut
+
+        const roundId = crypto.randomUUID()
+        const createdTeams: Team[] = teamGroups.map((playerIds) => ({
+          id: crypto.randomUUID(),
+          roundId,
+          playerIds,
+        }))
+        createdTeams.forEach((t) => { this.teams[t.id] = t })
+
+        const matchIds: string[] = []
+        for (let j = 0; j + 1 < createdTeams.length; j += 2) {
+          matchIds.push(matchStore.create(roundId, createdTeams[j].id, createdTeams[j + 1].id))
+        }
+
+        this.rounds[roundId] = {
+          id: roundId,
+          number: roundNumber,
+          status: 'pending',
+          matchIds,
+          sittingOutPlayerIds: sittingOut,
+          activePlayerSnapshot: activePlayers,
+        }
+        tournamentStore.addRound(roundId)
+        roundNumber++
       }
 
-      const round: Round = {
-        id: roundId,
-        number: roundNumber,
-        status: 'active',
-        matchIds,
-        sittingOutPlayerIds: sittingOut,
-        activePlayerSnapshot: activePlayers,
+      // Activate first pending round if none is active
+      if (!this.currentRound) this.activateNextPending()
+    },
+
+    activateNextPending() {
+      const first = Object.values(this.rounds)
+        .filter((r) => r.status === 'pending')
+        .sort((a, b) => a.number - b.number)[0]
+
+      if (first) {
+        first.status = 'active'
+        router.push('/tournament/active')
       }
-
-      this.rounds[roundId] = round
-      tournamentStore.addRound(roundId)
-
-      router.push('/tournament/active')
-
-      return roundId
     },
 
     finishRound(roundId: RoundID) {
@@ -98,31 +146,12 @@ export const useRoundStore = defineStore('rounds', {
       if (!round) return
       round.status = 'finished'
 
-      const tournamentStore = useTournamentStore()
-      const config = tournamentStore.config
-      if (!config) return
-
-      if (config.minGamesPerPlayer > 0) {
-        const matchStore = useMatchStore()
-        const playerStore = usePlayerStore()
-
-        const gamesPlayed: Record<string, number> = {}
-        Object.values(matchStore.matches).forEach((m) => {
-          if (m.finishedAt === null) return
-          const teamA = this.teams[m.teamAId]
-          const teamB = this.teams[m.teamBId]
-          teamA?.playerIds.forEach((pid) => { gamesPlayed[pid] = (gamesPlayed[pid] ?? 0) + 1 })
-          teamB?.playerIds.forEach((pid) => { gamesPlayed[pid] = (gamesPlayed[pid] ?? 0) + 1 })
-        })
-
-        const allReached = playerStore.activePlayers.every(
-          (p) => (gamesPlayed[p.id] ?? 0) >= config.minGamesPerPlayer,
-        )
-
-        if (allReached) return
+      const hasPending = Object.values(this.rounds).some((r) => r.status === 'pending')
+      if (hasPending) {
+        this.activateNextPending()
+      } else {
+        router.push('/tournament/active')
       }
-
-      this.generate()
     },
 
     reset() {
