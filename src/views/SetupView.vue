@@ -22,14 +22,13 @@ const courtCount = ref(2)
 
 interface LocalPlayer { name: string; gender: 'M' | 'W' | null }
 const localPlayers = ref<LocalPlayer[]>([])
-const newPlayerGender = ref<'M' | 'W' | null>(null)
+const newPlayerGender = ref<'M' | 'W'>('W')
 
 function addPlayer() {
   const n = newPlayerName.value.trim()
   if (!n || localPlayers.value.some((p) => p.name === n)) return
   localPlayers.value.push({ name: n, gender: newPlayerGender.value })
   newPlayerName.value = ''
-  newPlayerGender.value = null
 }
 
 function removePlayer(i: number) {
@@ -108,7 +107,7 @@ function startTournament() {
                 ? g === 'M' ? 'bg-blue-400 border-blue-400 text-white' : 'bg-pink-400 border-pink-400 text-white'
                 : 'bg-white border-stone-200 text-stone-500 hover:border-stone-300',
             ]"
-            @click="newPlayerGender = newPlayerGender === g ? null : g"
+            @click="newPlayerGender = g"
           >{{ g }}</button>
           <AppButton @click="addPlayer">+</AppButton>
         </div>
