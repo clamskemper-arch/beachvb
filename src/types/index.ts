@@ -66,6 +66,7 @@ export interface PlayerStats {
   pointsFor: number
   pointsAgainst: number
   pointDiff: number
+  winRatio: number
   sitOuts: number
   joinedAfterRound: number | null
   active: boolean

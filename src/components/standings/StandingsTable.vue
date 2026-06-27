@@ -3,6 +3,10 @@ import AppBadge from '../ui/AppBadge.vue'
 import type { PlayerStats } from '../../types'
 
 defineProps<{ stats: PlayerStats[] }>()
+
+function fmtRatio(r: number): string {
+  return (r * 100).toFixed(1) + ' %'
+}
 </script>
 
 <template>
@@ -16,6 +20,7 @@ defineProps<{ stats: PlayerStats[] }>()
           <th class="py-2 px-2 text-center">S</th>
           <th class="py-2 px-2 text-center">N</th>
           <th class="py-2 px-2 text-center">+/-</th>
+          <th class="py-2 px-2 text-center font-semibold text-stone-700">GQ</th>
         </tr>
       </thead>
       <tbody>
@@ -35,6 +40,9 @@ defineProps<{ stats: PlayerStats[] }>()
           <td class="py-3 px-2 text-center text-red-500">{{ s.losses }}</td>
           <td class="py-3 px-2 text-center" :class="s.pointDiff >= 0 ? 'text-green-600' : 'text-red-500'">
             {{ s.pointDiff > 0 ? '+' : '' }}{{ s.pointDiff }}
+          </td>
+          <td class="py-3 px-2 text-center font-semibold" :class="s.gamesPlayed === 0 ? 'text-stone-400' : 'text-amber-600'">
+            {{ s.gamesPlayed === 0 ? '—' : fmtRatio(s.winRatio) }}
           </td>
         </tr>
       </tbody>

@@ -71,6 +71,7 @@ export function usePlayerStats() {
         pointsFor,
         pointsAgainst,
         pointDiff: pointsFor - pointsAgainst,
+        winRatio: gamesPlayed > 0 ? wins / gamesPlayed : 0,
         sitOuts: sitOutCounts.value[player.id] ?? 0,
         joinedAfterRound: player.joinedAfterRound,
         active: player.active,
@@ -80,7 +81,7 @@ export function usePlayerStats() {
 
   const sorted = computed(() =>
     [...stats.value].sort((a, b) => {
-      if (b.wins !== a.wins) return b.wins - a.wins
+      if (b.winRatio !== a.winRatio) return b.winRatio - a.winRatio
       if (b.pointDiff !== a.pointDiff) return b.pointDiff - a.pointDiff
       return b.pointsFor - a.pointsFor
     }),
