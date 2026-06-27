@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import AppButton from '../components/ui/AppButton.vue'
 import AppCard from '../components/ui/AppCard.vue'
+import AppModal from '../components/ui/AppModal.vue'
 import PlayerToggleRow from '../components/players/PlayerToggleRow.vue'
 import { usePlayerStore } from '../stores/player'
 import { useTournamentStore } from '../stores/tournament'
@@ -12,6 +13,10 @@ const tournamentStore = useTournamentStore()
 const roundStore = useRoundStore()
 
 const newName = ref('')
+const confirmDeleteId = ref<string | null>(null)
+
+const confirmDeleteName = () =>
+  confirmDeleteId.value ? playerStore.byId(confirmDeleteId.value)?.name ?? '' : ''
 
 function addPlayer() {
   const n = newName.value.trim()
@@ -24,6 +29,13 @@ function addPlayer() {
 
 function onKeydown(e: KeyboardEvent) {
   if (e.key === 'Enter') addPlayer()
+}
+
+function removePlayer() {
+  if (!confirmDeleteId.value) return
+  playerStore.remove(confirmDeleteId.value)
+  tournamentStore.removePlayer(confirmDeleteId.value)
+  confirmDeleteId.value = null
 }
 </script>
 
@@ -57,11 +69,22 @@ function onKeydown(e: KeyboardEvent) {
           :key="player.id"
           :player="player"
           @toggle="playerStore.toggleActive"
+          @remove="confirmDeleteId = $event"
         />
       </div>
       <p class="text-xs text-stone-400 mt-3">
         {{ playerStore.activePlayers.length }} aktiv · {{ playerStore.all.length - playerStore.activePlayers.length }} inaktiv
       </p>
     </AppCard>
+
+    <AppModal title="Spieler löschen?" :show="confirmDeleteId !== null" @close="confirmDeleteId = null">
+      <p class="text-stone-600">
+        <strong>{{ confirmDeleteName() }}</strong> wird dauerhaft entfernt und nimmt ab sofort nicht mehr am Turnier teil.
+      </p>
+      <template #footer>
+        <AppButton variant="ghost" class="flex-1" @click="confirmDeleteId = null">Abbrechen</AppButton>
+        <AppButton variant="danger" class="flex-1" @click="removePlayer">Löschen</AppButton>
+      </template>
+    </AppModal>
   </div>
 </template>

@@ -36,6 +36,12 @@ export const useTournamentStore = defineStore('tournament', {
       this.tournament?.playerIds.push(playerId)
     },
 
+    removePlayer(playerId: string) {
+      if (this.tournament) {
+        this.tournament.playerIds = this.tournament.playerIds.filter((id) => id !== playerId)
+      }
+    },
+
     finish() {
       if (this.tournament) this.tournament.status = 'finished'
     },
