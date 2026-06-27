@@ -4,6 +4,7 @@ import { generateRound } from '../algorithms/teamGenerator'
 import { usePlayerStore } from './player'
 import { useMatchStore } from './match'
 import { useTournamentStore } from './tournament'
+import router from '../router'
 
 interface RoundState {
   rounds: Record<RoundID, Round>
@@ -79,6 +80,8 @@ export const useRoundStore = defineStore('rounds', {
 
       this.rounds[roundId] = round
       tournamentStore.addRound(roundId)
+
+      router.push('/tournament/active')
 
       return roundId
     },
