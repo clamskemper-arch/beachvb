@@ -96,6 +96,7 @@ export const useRoundStore = defineStore('rounds', {
           sitOutCounts,
           lastSittingOut,
           genders,
+          config.courtCount,
         )
 
         const sittingSet = new Set(sittingOut)

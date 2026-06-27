@@ -51,14 +51,16 @@ export function generateRound(
   sitOutCounts: Record<string, number>,
   lastSittingOut: string[] = [],
   genders: Record<string, 'M' | 'W' | null> = {},
+  courtCount = Infinity,
 ): GeneratedRound {
   const matchSize = teamSize * 2
-  const remainder = activePlayers.length % matchSize
+  const maxPlaying = Math.floor(Math.min(activePlayers.length, courtCount * matchSize) / matchSize) * matchSize
+  const sitOutCount = activePlayers.length - maxPlaying
 
   let sittingOut: string[] = []
   let playing = [...activePlayers]
 
-  if (remainder > 0) {
+  if (sitOutCount > 0) {
     const lastSittingOutSet = new Set(lastSittingOut)
     const sorted = [...activePlayers].sort((a, b) => {
       const aLastOut = lastSittingOutSet.has(a) ? 1 : 0
@@ -67,7 +69,7 @@ export function generateRound(
       const diff = (sitOutCounts[a] ?? 0) - (sitOutCounts[b] ?? 0)
       return diff !== 0 ? diff : Math.random() - 0.5
     })
-    sittingOut = sorted.slice(0, remainder)
+    sittingOut = sorted.slice(0, sitOutCount)
     const sittingOutSet = new Set(sittingOut)
     playing = activePlayers.filter((id) => !sittingOutSet.has(id))
   }
