@@ -22,12 +22,14 @@ const courtCount = ref(2)
 
 interface LocalPlayer { name: string; gender: 'M' | 'W' | null }
 const localPlayers = ref<LocalPlayer[]>([])
+const newPlayerGender = ref<'M' | 'W' | null>(null)
 
 function addPlayer() {
   const n = newPlayerName.value.trim()
   if (!n || localPlayers.value.some((p) => p.name === n)) return
-  localPlayers.value.push({ name: n, gender: null })
+  localPlayers.value.push({ name: n, gender: newPlayerGender.value })
   newPlayerName.value = ''
+  newPlayerGender.value = null
 }
 
 function removePlayer(i: number) {
@@ -97,7 +99,18 @@ function startTournament() {
             placeholder="Name eingeben"
             @keydown="onKeydown"
           />
-          <AppButton @click="addPlayer">Hinzufügen</AppButton>
+          <button
+            v-for="g in (['M', 'W'] as const)"
+            :key="g"
+            :class="[
+              'w-12 rounded-xl font-bold text-sm border-2 transition-colors',
+              newPlayerGender === g
+                ? g === 'M' ? 'bg-blue-400 border-blue-400 text-white' : 'bg-pink-400 border-pink-400 text-white'
+                : 'bg-white border-stone-200 text-stone-500 hover:border-stone-300',
+            ]"
+            @click="newPlayerGender = newPlayerGender === g ? null : g"
+          >{{ g }}</button>
+          <AppButton @click="addPlayer">+</AppButton>
         </div>
 
         <div v-if="localPlayers.length === 0" class="text-stone-400 text-sm text-center py-4">
