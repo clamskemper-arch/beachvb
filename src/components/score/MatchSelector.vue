@@ -18,7 +18,7 @@ const emit = defineEmits<{ 'update:selectedId': [id: string] }>()
             ? 'border-amber-500 bg-amber-50 text-amber-700'
             : 'border-stone-200 bg-white text-stone-700 hover:border-amber-300',
       ]"
-      @click="if (match.finishedAt === null) emit('update:selectedId', match.id)"
+      @click="match.finishedAt === null && emit('update:selectedId', match.id)"
     >
       Feld {{ i + 1 }}
       <span v-if="match.finishedAt !== null" class="ml-1">✓</span>
