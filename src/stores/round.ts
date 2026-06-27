@@ -38,10 +38,15 @@ export const useRoundStore = defineStore('rounds', {
       const activePlayers = playerStore.activePlayers.map((p) => p.id)
       if (activePlayers.length < config.teamSize * 2) return
 
+      const allRounds = Object.values(this.rounds).sort((a, b) => a.number - b.number)
+      const lastRound = allRounds.length > 0 ? allRounds[allRounds.length - 1] : null
+      const lastSittingOut = lastRound?.sittingOutPlayerIds ?? []
+
       const { teams: teamGroups, sittingOut } = generateRound(
         activePlayers,
         config.teamSize,
         sitOutCounts,
+        lastSittingOut,
       )
 
       const roundNumber = Object.values(this.rounds).length + 1
