@@ -4,11 +4,6 @@ import type { Player } from '../../types'
 
 defineProps<{ player: Player }>()
 const emit = defineEmits<{ toggle: [id: string]; remove: [id: string]; setGender: [id: string, gender: 'M' | 'W' | null] }>()
-
-function cycleGender(player: Player) {
-  const next = player.gender === null ? 'M' : player.gender === 'M' ? 'W' : null
-  emit('setGender', player.id, next)
-}
 </script>
 
 <template>
@@ -22,14 +17,19 @@ function cycleGender(player: Player) {
       </AppBadge>
     </div>
 
-    <button
-      :class="[
-        'text-xs font-bold w-7 h-7 rounded-full flex items-center justify-center transition-colors',
-        player.gender === 'W' ? 'bg-pink-400 text-white' : player.gender === 'M' ? 'bg-blue-400 text-white' : 'bg-stone-200 text-stone-500',
-      ]"
-      :title="player.gender === null ? 'Geschlecht festlegen' : player.gender === 'M' ? 'Männlich' : 'Weiblich'"
-      @click="cycleGender(player)"
-    >{{ player.gender ?? '?' }}</button>
+    <div class="flex gap-1">
+      <button
+        v-for="g in (['W', 'M'] as const)"
+        :key="g"
+        :class="[
+          'w-8 h-8 rounded-lg font-bold text-sm border-2 transition-colors',
+          player.gender === g
+            ? g === 'W' ? 'bg-pink-400 border-pink-400 text-white' : 'bg-blue-400 border-blue-400 text-white'
+            : 'bg-white border-stone-200 text-stone-400 hover:border-stone-300',
+        ]"
+        @click="emit('setGender', player.id, g)"
+      >{{ g }}</button>
+    </div>
 
     <div class="relative group">
       <button
