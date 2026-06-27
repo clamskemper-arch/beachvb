@@ -9,6 +9,7 @@ export interface Player {
   createdAt: number
   active: boolean
   joinedAfterRound: number | null
+  gender: 'M' | 'W' | null
 }
 
 export interface Team {

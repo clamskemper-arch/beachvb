@@ -87,11 +87,15 @@ export const useRoundStore = defineStore('rounds', {
       for (let i = 0; i < 100; i++) {
         if (activePlayers.every((pid) => (gamesPlayed[pid] ?? 0) >= target)) break
 
+        const genders: Record<string, 'M' | 'W' | null> = {}
+        playerStore.activePlayers.forEach((p) => { genders[p.id] = p.gender })
+
         const { teams: teamGroups, sittingOut } = generateRound(
           activePlayers,
           config.teamSize,
           sitOutCounts,
           lastSittingOut,
+          genders,
         )
 
         const sittingSet = new Set(sittingOut)

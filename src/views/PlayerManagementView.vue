@@ -69,6 +69,7 @@ function removePlayer() {
           :key="player.id"
           :player="player"
           @toggle="playerStore.toggleActive"
+          @set-gender="playerStore.setGender"
           @remove="confirmDeleteId = $event"
         />
       </div>

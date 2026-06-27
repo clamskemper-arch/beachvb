@@ -3,7 +3,12 @@ import AppBadge from '../ui/AppBadge.vue'
 import type { Player } from '../../types'
 
 defineProps<{ player: Player }>()
-const emit = defineEmits<{ toggle: [id: string]; remove: [id: string] }>()
+const emit = defineEmits<{ toggle: [id: string]; remove: [id: string]; setGender: [id: string, gender: 'M' | 'W' | null] }>()
+
+function cycleGender(player: Player) {
+  const next = player.gender === null ? 'M' : player.gender === 'M' ? 'W' : null
+  emit('setGender', player.id, next)
+}
 </script>
 
 <template>
@@ -16,6 +21,15 @@ const emit = defineEmits<{ toggle: [id: string]; remove: [id: string] }>()
         ab Runde {{ player.joinedAfterRound + 1 }}
       </AppBadge>
     </div>
+
+    <button
+      :class="[
+        'text-xs font-bold w-7 h-7 rounded-full flex items-center justify-center transition-colors',
+        player.gender === 'W' ? 'bg-pink-400 text-white' : player.gender === 'M' ? 'bg-blue-400 text-white' : 'bg-stone-200 text-stone-500',
+      ]"
+      :title="player.gender === null ? 'Geschlecht festlegen' : player.gender === 'M' ? 'Männlich' : 'Weiblich'"
+      @click="cycleGender(player)"
+    >{{ player.gender ?? '?' }}</button>
 
     <div class="relative group">
       <button

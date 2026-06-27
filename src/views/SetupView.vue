@@ -20,17 +20,23 @@ const teamSize = ref<2 | 3 | 4>(2)
 const minGames = ref(3)
 const courtCount = ref(2)
 
-const localPlayers = ref<string[]>([])
+interface LocalPlayer { name: string; gender: 'M' | 'W' | null }
+const localPlayers = ref<LocalPlayer[]>([])
 
 function addPlayer() {
   const n = newPlayerName.value.trim()
-  if (!n || localPlayers.value.includes(n)) return
-  localPlayers.value.push(n)
+  if (!n || localPlayers.value.some((p) => p.name === n)) return
+  localPlayers.value.push({ name: n, gender: null })
   newPlayerName.value = ''
 }
 
 function removePlayer(i: number) {
   localPlayers.value.splice(i, 1)
+}
+
+function cycleGender(i: number) {
+  const g = localPlayers.value[i].gender
+  localPlayers.value[i].gender = g === null ? 'M' : g === 'M' ? 'W' : null
 }
 
 function onKeydown(e: KeyboardEvent) {
@@ -48,8 +54,8 @@ function startTournament() {
   matchStore.reset()
 
   const playerIds: string[] = []
-  for (const pName of localPlayers.value) {
-    const p = playerStore.add(pName)
+  for (const lp of localPlayers.value) {
+    const p = playerStore.add(lp.name, null, lp.gender)
     playerIds.push(p.id)
   }
 
@@ -102,11 +108,19 @@ function startTournament() {
           <div
             v-for="(p, i) in localPlayers"
             :key="i"
-            class="flex items-center gap-1 bg-amber-100 rounded-full px-3 py-1.5"
+            class="flex items-center gap-1 bg-amber-100 rounded-full pl-3 pr-1.5 py-1.5"
           >
-            <span class="text-amber-800 font-medium text-sm">{{ p }}</span>
+            <span class="text-amber-800 font-medium text-sm">{{ p.name }}</span>
             <button
-              class="text-amber-600 hover:text-red-500 ml-1 text-lg leading-none"
+              :class="[
+                'text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center transition-colors ml-1',
+                p.gender === 'W' ? 'bg-pink-400 text-white' : p.gender === 'M' ? 'bg-blue-400 text-white' : 'bg-amber-200 text-amber-600',
+              ]"
+              :title="p.gender === null ? 'Geschlecht festlegen' : p.gender === 'M' ? 'Männlich → Weiblich' : 'Weiblich → Keine Angabe'"
+              @click="cycleGender(i)"
+            >{{ p.gender ?? '?' }}</button>
+            <button
+              class="text-amber-600 hover:text-red-500 w-6 h-6 flex items-center justify-center text-lg leading-none"
               @click="removePlayer(i)"
             >×</button>
           </div>

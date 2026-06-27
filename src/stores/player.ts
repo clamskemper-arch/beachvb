@@ -17,16 +17,22 @@ export const usePlayerStore = defineStore('players', {
   },
 
   actions: {
-    add(name: string, joinedAfterRound: number | null = null): Player {
+    add(name: string, joinedAfterRound: number | null = null, gender: 'M' | 'W' | null = null): Player {
       const player: Player = {
         id: crypto.randomUUID(),
         name: name.trim(),
         createdAt: Date.now(),
         active: true,
         joinedAfterRound,
+        gender,
       }
       this.players[player.id] = player
       return player
+    },
+
+    setGender(id: PlayerID, gender: 'M' | 'W' | null) {
+      const p = this.players[id]
+      if (p) p.gender = gender
     },
 
     remove(id: PlayerID) {

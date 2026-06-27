@@ -12,11 +12,45 @@ function shuffle<T>(arr: T[]): T[] {
   return a
 }
 
+function formBalancedTeams(
+  playing: string[],
+  teamSize: number,
+  genders: Record<string, 'M' | 'W' | null>,
+): string[][] {
+  const matchCount = playing.length / (teamSize * 2)
+  const women = shuffle(playing.filter((id) => genders[id] === 'W'))
+  const others = shuffle(playing.filter((id) => genders[id] !== 'W'))
+
+  const teams: string[][] = Array.from({ length: matchCount * 2 }, () => [])
+
+  // Distribute women evenly across matches, split 50/50 within each match
+  let wi = 0
+  for (let m = 0; m < matchCount; m++) {
+    const womenLeft = women.length - wi
+    const matchesLeft = matchCount - m
+    const wThisMatch = Math.round(womenLeft / matchesLeft)
+    const wA = Math.ceil(wThisMatch / 2)
+    const wB = Math.floor(wThisMatch / 2)
+    for (let j = 0; j < wA && wi < women.length; j++) teams[m * 2].push(women[wi++])
+    for (let j = 0; j < wB && wi < women.length; j++) teams[m * 2 + 1].push(women[wi++])
+  }
+
+  // Fill remaining slots with others (men / unspecified)
+  let oi = 0
+  for (let m = 0; m < matchCount; m++) {
+    while (teams[m * 2].length < teamSize) teams[m * 2].push(others[oi++])
+    while (teams[m * 2 + 1].length < teamSize) teams[m * 2 + 1].push(others[oi++])
+  }
+
+  return teams
+}
+
 export function generateRound(
   activePlayers: string[],
   teamSize: number,
   sitOutCounts: Record<string, number>,
   lastSittingOut: string[] = [],
+  genders: Record<string, 'M' | 'W' | null> = {},
 ): GeneratedRound {
   const matchSize = teamSize * 2
   const remainder = activePlayers.length % matchSize
@@ -26,29 +60,20 @@ export function generateRound(
 
   if (remainder > 0) {
     const lastSittingOutSet = new Set(lastSittingOut)
-
     const sorted = [...activePlayers].sort((a, b) => {
-      // Players who sat out last round are strongly deprioritized (play first)
       const aLastOut = lastSittingOutSet.has(a) ? 1 : 0
       const bLastOut = lastSittingOutSet.has(b) ? 1 : 0
       if (aLastOut !== bLastOut) return aLastOut - bLastOut
-
-      // Among the rest: fewest sit-outs → sit out next (ascending)
       const diff = (sitOutCounts[a] ?? 0) - (sitOutCounts[b] ?? 0)
       return diff !== 0 ? diff : Math.random() - 0.5
     })
-
     sittingOut = sorted.slice(0, remainder)
     const sittingOutSet = new Set(sittingOut)
     playing = activePlayers.filter((id) => !sittingOutSet.has(id))
   }
 
-  const shuffled = shuffle(playing)
-
-  const teams: string[][] = []
-  for (let i = 0; i < shuffled.length; i += teamSize) {
-    teams.push(shuffled.slice(i, i + teamSize))
-  }
+  // Use gender-balanced assignment; teams are already paired (m*2 vs m*2+1)
+  const teams = formBalancedTeams(playing, teamSize, genders)
 
   return { teams, sittingOut }
 }
