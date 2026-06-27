@@ -17,20 +17,26 @@ const emit = defineEmits<{ toggle: [id: string]; remove: [id: string] }>()
       </AppBadge>
     </div>
 
-    <button
-      :class="[
-        'relative inline-flex h-7 w-13 items-center rounded-full transition-colors min-w-13',
-        player.active ? 'bg-amber-500' : 'bg-stone-300',
-      ]"
-      @click="emit('toggle', player.id)"
-    >
-      <span
+    <div class="relative group">
+      <button
         :class="[
-          'inline-block h-5 w-5 rounded-full bg-white shadow transition-transform',
-          player.active ? 'translate-x-7' : 'translate-x-1',
+          'relative inline-flex h-7 w-13 items-center rounded-full transition-colors min-w-13',
+          player.active ? 'bg-amber-500' : 'bg-stone-300',
         ]"
-      />
-    </button>
+        :aria-label="player.active ? 'Deaktivieren' : 'Aktivieren'"
+        @click="emit('toggle', player.id)"
+      >
+        <span
+          :class="[
+            'inline-block h-5 w-5 rounded-full bg-white shadow transition-transform',
+            player.active ? 'translate-x-7' : 'translate-x-1',
+          ]"
+        />
+      </button>
+      <span class="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 rounded-lg bg-stone-800 px-2 py-1 text-xs text-white whitespace-nowrap opacity-0 transition-opacity group-hover:opacity-100">
+        {{ player.active ? 'Deaktivieren' : 'Aktivieren' }}
+      </span>
+    </div>
     <button
       class="w-8 h-8 flex items-center justify-center rounded-lg text-stone-400 hover:text-red-500 hover:bg-red-50 transition-colors"
       title="Spieler löschen"

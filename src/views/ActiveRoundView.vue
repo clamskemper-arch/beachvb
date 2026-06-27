@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, ref } from 'vue'
 import AppButton from '../components/ui/AppButton.vue'
 import AppModal from '../components/ui/AppModal.vue'
 import MatchCard from '../components/round/MatchCard.vue'
@@ -35,16 +35,14 @@ function generateRound() {
   roundStore.generate(sitOutCounts.value)
 }
 
+function nextRound() {
+  roundStore.generate(sitOutCounts.value)
+}
+
 function finishTournament() {
   tournamentStore.finish()
   router.push('/setup')
 }
-
-watch(allDone, (done) => {
-  if (done && canGenerate.value) {
-    roundStore.generate(sitOutCounts.value)
-  }
-})
 </script>
 
 <template>
@@ -82,11 +80,20 @@ watch(allDone, (done) => {
         />
       </div>
 
-      <div v-if="allDone && !canGenerate" class="rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-600 text-center">
-        Zu wenige aktive Spieler für eine neue Runde. Spieler aktivieren oder hinzufügen.
+      <div v-if="allDone" class="flex flex-col gap-3 pt-2">
+        <template v-if="canGenerate">
+          <AppButton size="lg" full-width @click="nextRound">
+            Nächste Runde starten →
+          </AppButton>
+        </template>
+        <div v-else class="rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-600 text-center">
+          Zu wenige aktive Spieler für eine neue Runde. Spieler aktivieren oder hinzufügen.
+        </div>
+        <AppButton variant="ghost" full-width @click="showFinishConfirm = true">
+          Turnier beenden
+        </AppButton>
       </div>
-
-      <div class="pt-2">
+      <div v-else class="pt-2">
         <AppButton variant="ghost" full-width @click="showFinishConfirm = true">
           Turnier beenden
         </AppButton>
