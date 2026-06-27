@@ -28,7 +28,7 @@ export const useRoundStore = defineStore('rounds', {
   },
 
   actions: {
-    generate(sitOutCounts: Record<string, number>) {
+    generate() {
       const playerStore = usePlayerStore()
       const matchStore = useMatchStore()
       const tournamentStore = useTournamentStore()
@@ -42,6 +42,13 @@ export const useRoundStore = defineStore('rounds', {
       const allRounds = Object.values(this.rounds).sort((a, b) => a.number - b.number)
       const lastRound = allRounds.length > 0 ? allRounds[allRounds.length - 1] : null
       const lastSittingOut = lastRound?.sittingOutPlayerIds ?? []
+
+      const sitOutCounts: Record<string, number> = {}
+      Object.values(this.rounds).forEach((r) => {
+        r.sittingOutPlayerIds.forEach((pid) => {
+          sitOutCounts[pid] = (sitOutCounts[pid] ?? 0) + 1
+        })
+      })
 
       const { teams: teamGroups, sittingOut } = generateRound(
         activePlayers,
@@ -91,13 +98,31 @@ export const useRoundStore = defineStore('rounds', {
       if (!round) return
       round.status = 'finished'
 
-      const sitOutCounts: Record<string, number> = {}
-      Object.values(this.rounds).forEach((r) => {
-        r.sittingOutPlayerIds.forEach((pid) => {
-          sitOutCounts[pid] = (sitOutCounts[pid] ?? 0) + 1
+      const tournamentStore = useTournamentStore()
+      const config = tournamentStore.config
+      if (!config) return
+
+      if (config.minGamesPerPlayer > 0) {
+        const matchStore = useMatchStore()
+        const playerStore = usePlayerStore()
+
+        const gamesPlayed: Record<string, number> = {}
+        Object.values(matchStore.matches).forEach((m) => {
+          if (m.finishedAt === null) return
+          const teamA = this.teams[m.teamAId]
+          const teamB = this.teams[m.teamBId]
+          teamA?.playerIds.forEach((pid) => { gamesPlayed[pid] = (gamesPlayed[pid] ?? 0) + 1 })
+          teamB?.playerIds.forEach((pid) => { gamesPlayed[pid] = (gamesPlayed[pid] ?? 0) + 1 })
         })
-      })
-      this.generate(sitOutCounts)
+
+        const allReached = playerStore.activePlayers.every(
+          (p) => (gamesPlayed[p.id] ?? 0) >= config.minGamesPerPlayer,
+        )
+
+        if (allReached) return
+      }
+
+      this.generate()
     },
 
     reset() {

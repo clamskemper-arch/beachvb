@@ -16,7 +16,7 @@ const matchStore = useMatchStore()
 const playerStore = usePlayerStore()
 const tournamentStore = useTournamentStore()
 const router = useRouter()
-const { sitOutCounts } = usePlayerStats()
+const { sorted } = usePlayerStats()
 
 const showFinishConfirm = ref(false)
 
@@ -28,8 +28,20 @@ const activeCount = computed(() => playerStore.activePlayers.length)
 const minNeeded = computed(() => (tournamentStore.config?.teamSize ?? 2) * 2)
 const canGenerate = computed(() => activeCount.value >= minNeeded.value)
 
-function generateRound() {
-  roundStore.generate(sitOutCounts.value)
+const minGames = computed(() => tournamentStore.config?.minGamesPerPlayer ?? 0)
+const allReachedMinGames = computed(() => {
+  if (minGames.value === 0) return false
+  return sorted.value
+    .filter((s) => s.active)
+    .every((s) => s.gamesPlayed >= minGames.value)
+})
+
+function startFirstRound() {
+  roundStore.generate()
+}
+
+function nextRound() {
+  roundStore.generate()
 }
 
 function finishTournament() {
@@ -46,7 +58,7 @@ function finishTournament() {
         Bereit für die erste Runde!<br />
         <span class="text-sm text-stone-400">{{ activeCount }} aktive Spieler</span>
       </p>
-      <AppButton size="lg" :disabled="!canGenerate" @click="generateRound">
+      <AppButton size="lg" :disabled="!canGenerate" @click="startFirstRound">
         Erste Runde starten
       </AppButton>
       <p v-if="!canGenerate" class="text-sm text-red-400 text-center">
@@ -73,11 +85,26 @@ function finishTournament() {
         />
       </div>
 
-      <div v-if="currentRound.status === 'finished' && !canGenerate" class="rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-600 text-center">
+      <div v-if="currentRound.status === 'finished' && allReachedMinGames" class="rounded-xl bg-green-50 border border-green-200 px-4 py-4 flex flex-col gap-3">
+        <p class="text-green-800 font-semibold text-center">
+          Alle Spieler haben die Mindestspielzahl erreicht
+        </p>
+        <p class="text-green-700 text-sm text-center">
+          Das Turnier kann jetzt beendet oder mit weiteren Runden fortgesetzt werden.
+        </p>
+        <AppButton size="lg" full-width :disabled="!canGenerate" @click="nextRound">
+          Weitere Runde starten
+        </AppButton>
+        <AppButton variant="ghost" full-width @click="showFinishConfirm = true">
+          Turnier beenden
+        </AppButton>
+      </div>
+
+      <div v-else-if="currentRound.status === 'finished' && !canGenerate" class="rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-600 text-center">
         Zu wenige aktive Spieler für eine neue Runde. Spieler aktivieren oder hinzufügen.
       </div>
 
-      <div class="pt-2">
+      <div v-else class="pt-2">
         <AppButton variant="ghost" full-width @click="showFinishConfirm = true">
           Turnier beenden
         </AppButton>
