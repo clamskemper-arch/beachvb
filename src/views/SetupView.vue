@@ -17,11 +17,14 @@ const matchStore = useMatchStore()
 const name = ref('Mein Turnier')
 const newPlayerName = ref('')
 const teamSize = ref<2 | 3 | 4>(2)
+const setsPerMatch = ref(2)
 const minGames = ref(3)
 const courtCount = ref(2)
 
 interface LocalPlayer { name: string; gender: 'M' | 'W' | null }
-const localPlayers = ref<LocalPlayer[]>([])
+const localPlayers = ref<LocalPlayer[]>(
+  playerStore.all.map((p) => ({ name: p.name, gender: p.gender })),
+)
 const newPlayerGender = ref<'M' | 'W'>('W')
 
 function addPlayer() {
@@ -62,6 +65,7 @@ function startTournament() {
 
   tournamentStore.create(name.value.trim(), {
     teamSize: teamSize.value,
+    setsPerMatch: setsPerMatch.value,
     minGamesPerPlayer: minGames.value,
     courtCount: courtCount.value,
   }, playerIds)
@@ -163,7 +167,17 @@ function startTournament() {
             </div>
           </div>
 
-          <div class="grid grid-cols-2 gap-4">
+          <div class="grid grid-cols-3 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-stone-600 mb-2">Sätze/Spiel</label>
+              <input
+                v-model.number="setsPerMatch"
+                type="number"
+                min="1"
+                max="10"
+                class="w-full px-4 py-3 rounded-xl border-2 border-stone-200 focus:border-amber-400 outline-none text-stone-800 text-center text-lg font-bold"
+              />
+            </div>
             <div>
               <label class="block text-sm font-medium text-stone-600 mb-2">Mindestspiele</label>
               <input

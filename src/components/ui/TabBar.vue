@@ -9,6 +9,7 @@ const tabs = [
   { label: 'Spieler', path: '/tournament/players', icon: '👥' },
   { label: 'Runden', path: '/tournament/rounds', icon: '📋' },
   { label: 'Tabelle', path: '/tournament/standings', icon: '🏆' },
+  { label: 'Info', path: '/tournament/info', icon: 'ℹ️' },
 ]
 </script>
 

@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import type { Match, MatchID, RoundID } from '../types'
+import type { Match, MatchID, RoundID, SetResult } from '../types'
 import { useRoundStore } from './round'
 
 interface MatchState {
@@ -32,6 +32,7 @@ export const useMatchStore = defineStore('matches', {
         roundId,
         teamAId,
         teamBId,
+        sets: [],
         scoreA: null,
         scoreB: null,
         finishedAt: null,
@@ -40,11 +41,12 @@ export const useMatchStore = defineStore('matches', {
       return match.id
     },
 
-    confirm(matchId: MatchID, scoreA: number, scoreB: number) {
+    confirm(matchId: MatchID, sets: SetResult[]) {
       const match = this.matches[matchId]
       if (!match) return
-      match.scoreA = scoreA
-      match.scoreB = scoreB
+      match.sets = sets
+      match.scoreA = sets.filter((s) => s.scoreA > s.scoreB).length
+      match.scoreB = sets.filter((s) => s.scoreB > s.scoreA).length
       match.finishedAt = Date.now()
 
       const roundStore = useRoundStore()

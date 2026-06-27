@@ -19,6 +19,7 @@ const router = createRouter({
         { path: 'players', component: () => import('../views/PlayerManagementView.vue') },
         { path: 'rounds', component: () => import('../views/RoundsView.vue') },
         { path: 'standings', component: () => import('../views/StandingsView.vue') },
+        { path: 'info', component: () => import('../views/TournamentInfoView.vue') },
       ],
     },
   ],

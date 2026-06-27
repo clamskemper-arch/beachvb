@@ -25,6 +25,8 @@ export function usePlayerStats() {
       let wins = 0
       let losses = 0
       let draws = 0
+      let setsWon = 0
+      let setsPlayed = 0
       let pointsFor = 0
       let pointsAgainst = 0
 
@@ -43,17 +45,23 @@ export function usePlayerStats() {
 
           const sA = match.scoreA ?? 0
           const sB = match.scoreB ?? 0
+          const sets = match.sets ?? []
+          const setPointsA = sets.reduce((sum, s) => sum + s.scoreA, 0)
+          const setPointsB = sets.reduce((sum, s) => sum + s.scoreB, 0)
           gamesPlayed++
+          setsPlayed += sA + sB
 
           if (inTeamA) {
-            pointsFor += sA
-            pointsAgainst += sB
+            setsWon += sA
+            pointsFor += setPointsA
+            pointsAgainst += setPointsB
             if (sA > sB) wins++
             else if (sB > sA) losses++
             else draws++
           } else {
-            pointsFor += sB
-            pointsAgainst += sA
+            setsWon += sB
+            pointsFor += setPointsB
+            pointsAgainst += setPointsA
             if (sB > sA) wins++
             else if (sA > sB) losses++
             else draws++
@@ -68,10 +76,12 @@ export function usePlayerStats() {
         wins,
         losses,
         draws,
+        setsWon,
+        setsPlayed,
         pointsFor,
         pointsAgainst,
         pointDiff: pointsFor - pointsAgainst,
-        winRatio: gamesPlayed > 0 ? wins / gamesPlayed : 0,
+        winRatio: setsPlayed > 0 ? setsWon / setsPlayed : 0,
         sitOuts: sitOutCounts.value[player.id] ?? 0,
         joinedAfterRound: player.joinedAfterRound,
         active: player.active,

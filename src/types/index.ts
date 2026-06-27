@@ -18,13 +18,19 @@ export interface Team {
   playerIds: PlayerID[]
 }
 
+export interface SetResult {
+  scoreA: number
+  scoreB: number
+}
+
 export interface Match {
   id: MatchID
   roundId: RoundID
   teamAId: TeamID
   teamBId: TeamID
-  scoreA: number | null
-  scoreB: number | null
+  sets: SetResult[]
+  scoreA: number | null  // sets won by team A
+  scoreB: number | null  // sets won by team B
   finishedAt: number | null
 }
 
@@ -41,6 +47,7 @@ export interface Round {
 
 export interface TournamentConfig {
   teamSize: 2 | 3 | 4
+  setsPerMatch: number
   minGamesPerPlayer: number
   courtCount: number
 }
@@ -64,10 +71,12 @@ export interface PlayerStats {
   wins: number
   losses: number
   draws: number
+  setsWon: number
+  setsPlayed: number
   pointsFor: number
   pointsAgainst: number
   pointDiff: number
-  winRatio: number
+  winRatio: number  // setsWon / setsPlayed
   sitOuts: number
   joinedAfterRound: number | null
   active: boolean
