@@ -142,9 +142,16 @@ function startTournament() {
           </div>
         </div>
 
-        <p class="text-xs text-stone-400 mt-2">
-          {{ localPlayers.length }} Spieler · mindestens {{ minRequired }} benötigt
-        </p>
+        <div class="flex items-center justify-between mt-2">
+          <p class="text-xs text-stone-400">
+            {{ localPlayers.length }} Spieler · mindestens {{ minRequired }} benötigt
+          </p>
+          <button
+            v-if="localPlayers.length > 0"
+            class="text-xs text-red-400 hover:text-red-600 transition-colors"
+            @click="localPlayers = []"
+          >Alle entfernen</button>
+        </div>
       </AppCard>
 
       <!-- Config -->
