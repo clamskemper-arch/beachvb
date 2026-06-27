@@ -50,7 +50,7 @@ export const useMatchStore = defineStore('matches', {
       match.finishedAt = Date.now()
 
       const roundStore = useRoundStore()
-      if (roundStore.rounds[match.roundId]) {
+      if (roundStore.rounds[match.roundId]?.status === 'active') {
         const allDone = Object.values(this.matches)
           .filter((m) => m.roundId === match.roundId)
           .every((m) => m.finishedAt !== null)

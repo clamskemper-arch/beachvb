@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import AppBadge from '../components/ui/AppBadge.vue'
+import ScoreEntryCard from '../components/score/ScoreEntryCard.vue'
 import { useRoundStore } from '../stores/round'
 import { useMatchStore } from '../stores/match'
 import { usePlayerStore } from '../stores/player'
@@ -10,6 +11,7 @@ const matchStore = useMatchStore()
 const playerStore = usePlayerStore()
 
 const expanded = ref<Set<string>>(new Set())
+const editingMatchId = ref<string | null>(null)
 
 function toggle(id: string) {
   if (expanded.value.has(id)) expanded.value.delete(id)
@@ -20,6 +22,10 @@ function teamNames(teamId: string): string {
   const team = roundStore.teamById(teamId)
   if (!team) return '?'
   return team.playerIds.map((id) => playerStore.byId(id)?.name ?? '?').join(' & ')
+}
+
+function toggleEdit(matchId: string) {
+  editingMatchId.value = editingMatchId.value === matchId ? null : matchId
 }
 </script>
 
@@ -56,29 +62,49 @@ function teamNames(teamId: string): string {
         <div v-if="round.sittingOutPlayerIds.length" class="px-4 py-2 text-xs text-stone-400 bg-stone-50">
           Pausiert: {{ round.sittingOutPlayerIds.map(id => playerStore.byId(id)?.name).join(', ') }}
         </div>
-        <div
-          v-for="(matchId, i) in round.matchIds"
-          :key="matchId"
-          class="px-4 py-3 border-t border-stone-50 flex items-center justify-between text-sm"
-        >
-          <div class="flex-1">
-            <span class="text-stone-400 text-xs block">Feld {{ i + 1 }}</span>
-            <span class="text-stone-700">{{ teamNames(matchStore.byId(matchId)?.teamAId ?? '') }}</span>
+
+        <template v-for="(matchId, i) in round.matchIds" :key="matchId">
+          <div class="px-4 py-3 border-t border-stone-50 flex items-center gap-2 text-sm">
+            <div class="flex-1">
+              <span class="text-stone-400 text-xs block">Feld {{ i + 1 }}</span>
+              <span class="text-stone-700">{{ teamNames(matchStore.byId(matchId)?.teamAId ?? '') }}</span>
+            </div>
+
+            <div class="px-2 text-center shrink-0">
+              <template v-if="matchStore.byId(matchId)?.finishedAt">
+                <span class="font-bold text-stone-800">
+                  {{ matchStore.byId(matchId)?.scoreA }} : {{ matchStore.byId(matchId)?.scoreB }}
+                </span>
+              </template>
+              <template v-else>
+                <span class="text-stone-300">- : -</span>
+              </template>
+            </div>
+
+            <div class="flex-1 text-right">
+              <span class="text-stone-700">{{ teamNames(matchStore.byId(matchId)?.teamBId ?? '') }}</span>
+            </div>
+
+            <button
+              v-if="matchStore.byId(matchId)?.finishedAt || round.status === 'active'"
+              :class="[
+                'ml-1 w-8 h-8 flex items-center justify-center rounded-lg text-sm transition-colors shrink-0',
+                editingMatchId === matchId
+                  ? 'bg-amber-100 text-amber-600'
+                  : 'text-stone-400 hover:text-amber-500 hover:bg-amber-50',
+              ]"
+              title="Ergebnis bearbeiten"
+              @click="toggleEdit(matchId)"
+            >✏️</button>
           </div>
-          <div class="px-3 text-center">
-            <template v-if="matchStore.byId(matchId)?.finishedAt">
-              <span class="font-bold text-stone-800">
-                {{ matchStore.byId(matchId)?.scoreA }} : {{ matchStore.byId(matchId)?.scoreB }}
-              </span>
-            </template>
-            <template v-else>
-              <span class="text-stone-300">- : -</span>
-            </template>
+
+          <div v-if="editingMatchId === matchId && matchStore.byId(matchId)" class="px-4 pb-4 border-t border-stone-50">
+            <ScoreEntryCard
+              :match="matchStore.byId(matchId)!"
+              @confirmed="editingMatchId = null"
+            />
           </div>
-          <div class="flex-1 text-right">
-            <span class="text-stone-700">{{ teamNames(matchStore.byId(matchId)?.teamBId ?? '') }}</span>
-          </div>
-        </div>
+        </template>
       </div>
     </div>
   </div>

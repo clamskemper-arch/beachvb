@@ -20,7 +20,11 @@ const setsPerMatch = computed(() => tournamentStore.config?.setsPerMatch ?? 2)
 const sets = ref<SetResult[]>([])
 
 function resetSets() {
-  sets.value = Array.from({ length: setsPerMatch.value }, () => ({ scoreA: 0, scoreB: 0 }))
+  if (props.match.sets?.length) {
+    sets.value = props.match.sets.map((s) => ({ ...s }))
+  } else {
+    sets.value = Array.from({ length: setsPerMatch.value }, () => ({ scoreA: 0, scoreB: 0 }))
+  }
 }
 
 watch(() => props.match.id, resetSets, { immediate: true })
@@ -115,7 +119,7 @@ function confirm() {
     </div>
 
     <AppButton :disabled="!canConfirm" full-width size="lg" @click="confirm">
-      Ergebnis speichern
+      {{ match.finishedAt ? 'Ergebnis aktualisieren' : 'Ergebnis speichern' }}
     </AppButton>
   </div>
 </template>

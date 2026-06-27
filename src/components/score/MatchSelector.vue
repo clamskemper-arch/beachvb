@@ -12,16 +12,17 @@ const emit = defineEmits<{ 'update:selectedId': [id: string] }>()
       :key="match.id"
       :class="[
         'px-4 py-3 rounded-xl font-semibold text-sm border-2 transition-colors',
-        match.finishedAt !== null
-          ? 'border-green-200 bg-green-50 text-green-700'
-          : selectedId === match.id
-            ? 'border-amber-500 bg-amber-50 text-amber-700'
+        selectedId === match.id
+          ? 'border-amber-500 bg-amber-50 text-amber-700'
+          : match.finishedAt !== null
+            ? 'border-green-200 bg-green-50 text-green-700 hover:border-amber-300'
             : 'border-stone-200 bg-white text-stone-700 hover:border-amber-300',
       ]"
-      @click="match.finishedAt === null && emit('update:selectedId', match.id)"
+      @click="emit('update:selectedId', match.id)"
     >
       Feld {{ i + 1 }}
-      <span v-if="match.finishedAt !== null" class="ml-1">✓</span>
+      <span v-if="match.finishedAt !== null && selectedId !== match.id" class="ml-1">✓</span>
+      <span v-else-if="match.finishedAt !== null && selectedId === match.id" class="ml-1">✏️</span>
     </button>
   </div>
 </template>
