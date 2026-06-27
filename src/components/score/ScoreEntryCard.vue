@@ -2,7 +2,6 @@
 import { ref, computed, watch } from 'vue'
 import TeamScoreInput from './TeamScoreInput.vue'
 import AppButton from '../ui/AppButton.vue'
-import AppModal from '../ui/AppModal.vue'
 import type { Match } from '../../types'
 import { useRoundStore } from '../../stores/round'
 import { usePlayerStore } from '../../stores/player'
@@ -17,7 +16,6 @@ const matchStore = useMatchStore()
 
 const scoreA = ref(0)
 const scoreB = ref(0)
-const showConfirm = ref(false)
 
 watch(() => props.match.id, () => { scoreA.value = 0; scoreB.value = 0 }, { immediate: true })
 
@@ -33,7 +31,6 @@ const canConfirm = computed(() => scoreA.value > 0 || scoreB.value > 0)
 
 function confirm() {
   matchStore.confirm(props.match.id, scoreA.value, scoreB.value)
-  showConfirm.value = false
   emit('confirmed')
 }
 </script>
@@ -51,21 +48,9 @@ function confirm() {
     </div>
 
     <div class="mt-6">
-      <AppButton :disabled="!canConfirm" full-width size="lg" @click="showConfirm = true">
-        Ergebnis bestätigen
+      <AppButton :disabled="!canConfirm" full-width size="lg" @click="confirm">
+        Ergebnis speichern
       </AppButton>
     </div>
   </div>
-
-  <AppModal title="Ergebnis speichern?" :show="showConfirm" @close="showConfirm = false">
-    <p class="text-center text-2xl font-bold text-stone-800 my-2">
-      {{ scoreA }} : {{ scoreB }}
-    </p>
-    <p class="text-center text-sm text-stone-500">{{ nameA }} vs {{ nameB }}</p>
-
-    <template #footer>
-      <AppButton variant="secondary" full-width @click="showConfirm = false">Abbrechen</AppButton>
-      <AppButton full-width @click="confirm">Speichern</AppButton>
-    </template>
-  </AppModal>
 </template>
