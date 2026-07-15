@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import type { Player, PlayerID } from '../types'
+import { sortPlayersByGenderThenName } from '../utils/sortPlayers'
 
 interface PlayerState {
   players: Record<PlayerID, Player>
@@ -11,8 +12,8 @@ export const usePlayerStore = defineStore('players', {
   }),
 
   getters: {
-    all: (state) => Object.values(state.players),
-    activePlayers: (state) => Object.values(state.players).filter((p) => p.active),
+    all: (state) => sortPlayersByGenderThenName(Object.values(state.players)),
+    activePlayers: (state) => sortPlayersByGenderThenName(Object.values(state.players).filter((p) => p.active)),
     byId: (state) => (id: PlayerID) => state.players[id],
   },
 

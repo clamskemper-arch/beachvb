@@ -7,6 +7,7 @@ import { useTournamentStore } from '../stores/tournament'
 import { usePlayerStore } from '../stores/player'
 import { useRoundStore } from '../stores/round'
 import { useMatchStore } from '../stores/match'
+import { sortPlayersByGenderThenName } from '../utils/sortPlayers'
 
 const router = useRouter()
 const tournamentStore = useTournamentStore()
@@ -46,6 +47,10 @@ function cycleGender(i: number) {
 function onKeydown(e: KeyboardEvent) {
   if (e.key === 'Enter') addPlayer()
 }
+
+const sortedLocalPlayers = computed(() =>
+  sortPlayersByGenderThenName(localPlayers.value.map((p, i) => ({ ...p, i }))),
+)
 
 const minRequired = computed(() => teamSize.value * 2)
 const canStart = computed(() => name.value.trim() && localPlayers.value.length >= minRequired.value)
@@ -122,8 +127,8 @@ function startTournament() {
 
         <div v-else class="flex flex-wrap gap-2">
           <div
-            v-for="(p, i) in localPlayers"
-            :key="i"
+            v-for="p in sortedLocalPlayers"
+            :key="p.i"
             class="flex items-center gap-1 bg-amber-100 rounded-full pl-3 pr-1.5 py-1.5"
           >
             <span class="text-amber-800 font-medium text-sm">{{ p.name }}</span>
@@ -133,11 +138,11 @@ function startTournament() {
                 p.gender === 'W' ? 'bg-pink-400 text-white' : p.gender === 'M' ? 'bg-blue-400 text-white' : 'bg-amber-200 text-amber-600',
               ]"
               :title="p.gender === null ? 'Geschlecht festlegen' : p.gender === 'M' ? 'Männlich → Weiblich' : 'Weiblich → Keine Angabe'"
-              @click="cycleGender(i)"
+              @click="cycleGender(p.i)"
             >{{ p.gender ?? '?' }}</button>
             <button
               class="text-amber-600 hover:text-red-500 w-6 h-6 flex items-center justify-center text-lg leading-none"
-              @click="removePlayer(i)"
+              @click="removePlayer(p.i)"
             >×</button>
           </div>
         </div>

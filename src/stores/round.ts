@@ -75,17 +75,15 @@ export const useRoundStore = defineStore('rounds', {
       activePlayers.forEach((pid) => { if (!(pid in gamesPlayed)) gamesPlayed[pid] = 0 })
 
       const base = Math.max(1, config.minGamesPerPlayer)
-      const currentMin = activePlayers.length > 0
-        ? Math.min(...activePlayers.map((pid) => gamesPlayed[pid] ?? 0))
-        : 0
-      const target = extend && currentMin >= base ? currentMin + base : base
 
       let lastSittingOut = finishedRounds[finishedRounds.length - 1]?.sittingOutPlayerIds ?? []
       let roundNumber = finishedRounds.length + 1
 
-      // Generate rounds until all active players have reached target
-      for (let i = 0; i < 100; i++) {
-        if (activePlayers.every((pid) => (gamesPlayed[pid] ?? 0) >= target)) break
+      // extend: append exactly one more round (sit-out/games fairness carries over from finished rounds)
+      // otherwise: generate rounds until all active players have reached the minimum
+      const maxIterations = extend ? 1 : 100
+      for (let i = 0; i < maxIterations; i++) {
+        if (!extend && activePlayers.every((pid) => (gamesPlayed[pid] ?? 0) >= base)) break
 
         const genders: Record<string, 'M' | 'W' | null> = {}
         playerStore.activePlayers.forEach((p) => { genders[p.id] = p.gender })

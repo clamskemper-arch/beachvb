@@ -17,7 +17,7 @@ function fmtRatio(r: number): string {
           <th class="text-left py-2 px-2">#</th>
           <th class="text-left py-2 px-2">Spieler</th>
           <th class="py-2 px-2 text-center" title="Spiele">Sp</th>
-          <th class="py-2 px-2 text-center" title="Sätze gewonnen : gespielt">Sätze</th>
+          <th class="py-2 px-2 text-center" title="Sätze gewonnen : verloren">Sätze</th>
           <th class="py-2 px-2 text-center" title="Punkte +/-">+/-</th>
           <th class="py-2 px-2 text-center font-semibold text-stone-700" title="Gewinnquotient (Sätze gewonnen / Sätze gespielt)">GQ</th>
         </tr>
@@ -38,7 +38,7 @@ function fmtRatio(r: number): string {
           <td class="py-3 px-2 text-center text-stone-600">
             <span class="font-semibold text-green-600">{{ s.setsWon }}</span>
             <span class="text-stone-400">:</span>
-            <span>{{ s.setsPlayed }}</span>
+            <span>{{ s.setsPlayed - s.setsWon }}</span>
           </td>
           <td class="py-3 px-2 text-center" :class="s.pointDiff >= 0 ? 'text-green-600' : 'text-red-500'">
             {{ s.pointDiff > 0 ? '+' : '' }}{{ s.pointDiff }}

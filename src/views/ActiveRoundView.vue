@@ -66,7 +66,7 @@ function finishTournament() {
         <p class="text-green-800 font-semibold text-center">Alle Spieler haben die Mindestspielzahl erreicht</p>
         <p class="text-green-700 text-sm text-center">Das Turnier kann beendet oder mit weiteren Runden fortgesetzt werden.</p>
         <AppButton size="lg" full-width :disabled="!canGenerate" @click="roundStore.schedulePendingRounds(true)">
-          Weitere Runden generieren
+          Weitere Runde generieren
         </AppButton>
       </div>
       <div v-else class="rounded-xl bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-700 text-center">
