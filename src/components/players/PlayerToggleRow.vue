@@ -1,20 +1,59 @@
 <script setup lang="ts">
+import { nextTick, ref } from 'vue'
 import AppBadge from '../ui/AppBadge.vue'
 import type { Player } from '../../types'
 
-defineProps<{ player: Player }>()
-const emit = defineEmits<{ toggle: [id: string]; remove: [id: string]; setGender: [id: string, gender: 'M' | 'W' | null] }>()
+const props = defineProps<{ player: Player }>()
+const emit = defineEmits<{ toggle: [id: string]; remove: [id: string]; setGender: [id: string, gender: 'M' | 'W' | null]; rename: [id: string, name: string] }>()
+
+const editing = ref(false)
+const editValue = ref('')
+const nameInput = ref<HTMLInputElement | null>(null)
+
+async function startEdit() {
+  editValue.value = props.player.name
+  editing.value = true
+  await nextTick()
+  nameInput.value?.focus()
+  nameInput.value?.select()
+}
+
+function commitEdit() {
+  if (!editing.value) return
+  editing.value = false
+  const trimmed = editValue.value.trim()
+  if (trimmed && trimmed !== props.player.name) emit('rename', props.player.id, trimmed)
+}
+
+function cancelEdit() {
+  editing.value = false
+}
 </script>
 
 <template>
   <div class="flex items-center gap-3 py-3 border-b border-stone-100 last:border-0">
     <div class="flex-1">
-      <span :class="['font-medium', !player.active ? 'text-stone-400 line-through' : 'text-stone-800']">
-        {{ player.name }}
-      </span>
-      <AppBadge v-if="player.joinedAfterRound !== null" variant="info" class="ml-2">
-        ab Runde {{ player.joinedAfterRound + 1 }}
-      </AppBadge>
+      <input
+        v-if="editing"
+        ref="nameInput"
+        v-model="editValue"
+        type="text"
+        class="w-full px-2 py-1 rounded-lg border-2 border-amber-400 outline-none text-stone-800 font-medium"
+        @keydown.enter="commitEdit"
+        @keydown.escape="cancelEdit"
+        @blur="commitEdit"
+      />
+      <template v-else>
+        <button
+          type="button"
+          :class="['font-medium text-left', !player.active ? 'text-stone-400 line-through' : 'text-stone-800']"
+          title="Namen bearbeiten"
+          @click="startEdit"
+        >{{ player.name }}</button>
+        <AppBadge v-if="player.joinedAfterRound !== null" variant="info" class="ml-2">
+          ab Runde {{ player.joinedAfterRound + 1 }}
+        </AppBadge>
+      </template>
     </div>
 
     <div class="flex gap-1">

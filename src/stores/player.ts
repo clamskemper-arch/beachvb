@@ -36,6 +36,13 @@ export const usePlayerStore = defineStore('players', {
       if (p) p.gender = gender
     },
 
+    rename(id: PlayerID, name: string) {
+      const trimmed = name.trim()
+      if (!trimmed) return
+      const p = this.players[id]
+      if (p) p.name = trimmed
+    },
+
     remove(id: PlayerID) {
       delete this.players[id]
     },
@@ -48,6 +55,10 @@ export const usePlayerStore = defineStore('players', {
     setActive(id: PlayerID, active: boolean) {
       const p = this.players[id]
       if (p) p.active = active
+    },
+
+    setAllActive(active: boolean) {
+      Object.values(this.players).forEach((p) => { p.active = active })
     },
 
     reset() {

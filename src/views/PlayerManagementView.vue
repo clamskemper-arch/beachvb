@@ -13,6 +13,7 @@ const tournamentStore = useTournamentStore()
 const roundStore = useRoundStore()
 
 const newName = ref('')
+const newGender = ref<'M' | 'W'>('W')
 const confirmDeleteId = ref<string | null>(null)
 
 const confirmDeleteName = () =>
@@ -22,7 +23,7 @@ function addPlayer() {
   const n = newName.value.trim()
   if (!n) return
   const currentRoundNumber = roundStore.currentRound?.number ?? null
-  const player = playerStore.add(n, currentRoundNumber)
+  const player = playerStore.add(n, currentRoundNumber, newGender.value)
   tournamentStore.addPlayer(player.id)
   newName.value = ''
 }
@@ -52,6 +53,17 @@ function removePlayer() {
           placeholder="Name eingeben"
           @keydown="onKeydown"
         />
+        <button
+          v-for="g in (['M', 'W'] as const)"
+          :key="g"
+          :class="[
+            'w-12 rounded-xl font-bold text-sm border-2 transition-colors',
+            newGender === g
+              ? g === 'M' ? 'bg-blue-400 border-blue-400 text-white' : 'bg-pink-400 border-pink-400 text-white'
+              : 'bg-white border-stone-200 text-stone-500 hover:border-stone-300',
+          ]"
+          @click="newGender = g"
+        >{{ g }}</button>
         <AppButton :disabled="!newName.trim()" @click="addPlayer">Hinzufügen</AppButton>
       </div>
       <p class="text-xs text-stone-400 mt-2">
@@ -63,16 +75,21 @@ function removePlayer() {
       <div v-if="playerStore.all.length === 0" class="text-stone-400 text-sm text-center py-4">
         Keine Spieler
       </div>
-      <div v-else>
+      <template v-else>
+        <div class="flex gap-2 mb-3">
+          <AppButton variant="secondary" class="flex-1" @click="playerStore.setAllActive(true)">Alle aktivieren</AppButton>
+          <AppButton variant="secondary" class="flex-1" @click="playerStore.setAllActive(false)">Alle deaktivieren</AppButton>
+        </div>
         <PlayerToggleRow
           v-for="player in playerStore.all"
           :key="player.id"
           :player="player"
           @toggle="playerStore.toggleActive"
           @set-gender="playerStore.setGender"
+          @rename="playerStore.rename"
           @remove="confirmDeleteId = $event"
         />
-      </div>
+      </template>
       <p class="text-xs text-stone-400 mt-3">
         {{ playerStore.activePlayers.length }} aktiv · {{ playerStore.all.length - playerStore.activePlayers.length }} inaktiv
       </p>
