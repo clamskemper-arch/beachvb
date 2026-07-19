@@ -28,6 +28,9 @@ Spieler mit den wenigsten bisherigen Pausen kommen zuerst dran (Sit-out-Counter 
 ### Geschlechter-Balance bei Teamgenerierung
 Beim Pairen von Teams wird versucht, gleich viele Frauen und Männer in gegenüberstehenden Teams zu haben.
 
+### Teammate/Gegner-Fairness (`PairingHistory` in `teamGenerator.ts`)
+`round.ts` baut vor jeder Rundengenerierung eine `PairingHistory` (Teammate-/Gegner-Zählung pro Spielerpaar) aus allen `finished`- und der aktuellen `active`-Runde. `formBalancedTeams()` füllt Team-Slots danach greedy: für jeden Slot wird der verbleibende Kandidat gewählt, der am wenigsten oft mit den aktuellen Team-Mitgliedern gespielt bzw. gegen das aktuelle Gegner-Team gespielt hat. Bei Mehrfachrunden-Generierung in einem Aufruf (Turnierstart, "Weitere Runde") wird die History nach jeder erzeugten Runde per `recordMatchup()` aktualisiert, damit auch Runden innerhalb desselben Batches sich nicht wiederholen.
+
 ## Bekannte Einschränkungen dieser Umgebung
 
 - **`npm install` funktioniert nicht** — kein Internetzugang, `node_modules` nicht installiert

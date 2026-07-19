@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import type { Round, Team, RoundID } from '../types'
-import { generateRound } from '../algorithms/teamGenerator'
+import { generateRound, createPairingHistory, recordMatchup } from '../algorithms/teamGenerator'
 import { usePlayerStore } from './player'
 import { useMatchStore } from './match'
 import { useTournamentStore } from './tournament'
@@ -76,6 +76,22 @@ export const useRoundStore = defineStore('rounds', {
 
       const base = Math.max(1, config.minGamesPerPlayer)
 
+      // Build teammate/opponent history from finished and the currently active round,
+      // so newly generated rounds avoid repeating past pairings where possible.
+      const history = createPairingHistory()
+      Object.values(this.rounds)
+        .filter((r) => r.status === 'finished' || r.status === 'active')
+        .forEach((r) => {
+          r.matchIds.forEach((matchId) => {
+            const match = matchStore.byId(matchId)
+            if (!match) return
+            const teamA = this.teams[match.teamAId]
+            const teamB = this.teams[match.teamBId]
+            if (!teamA || !teamB) return
+            recordMatchup(history, teamA.playerIds, teamB.playerIds)
+          })
+        })
+
       let lastSittingOut = finishedRounds[finishedRounds.length - 1]?.sittingOutPlayerIds ?? []
       let roundNumber = finishedRounds.length + 1
 
@@ -95,6 +111,7 @@ export const useRoundStore = defineStore('rounds', {
           lastSittingOut,
           genders,
           config.courtCount,
+          history,
         )
 
         const sittingSet = new Set(sittingOut)
@@ -115,6 +132,7 @@ export const useRoundStore = defineStore('rounds', {
         const matchIds: string[] = []
         for (let j = 0; j + 1 < createdTeams.length; j += 2) {
           matchIds.push(matchStore.create(roundId, createdTeams[j].id, createdTeams[j + 1].id))
+          recordMatchup(history, createdTeams[j].playerIds, createdTeams[j + 1].playerIds)
         }
 
         this.rounds[roundId] = {
