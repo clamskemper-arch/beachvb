@@ -16,6 +16,7 @@ const matchStore = useMatchStore()
 const tournamentStore = useTournamentStore()
 
 const setsPerMatch = computed(() => tournamentStore.config?.setsPerMatch ?? 2)
+const pointsPerSet = computed(() => tournamentStore.config?.pointsPerSet ?? 21)
 
 const sets = ref<SetResult[]>([])
 
@@ -84,6 +85,11 @@ function confirm() {
           class="w-10 h-10 rounded-xl bg-stone-100 text-stone-700 font-bold text-lg hover:bg-amber-100 active:bg-amber-200 transition-colors"
           @click="s.scoreA++"
         >+</button>
+        <button
+          class="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 font-bold text-sm hover:bg-amber-200 active:bg-amber-300 transition-colors"
+          :title="`Direkt auf ${pointsPerSet} setzen`"
+          @click="s.scoreA = pointsPerSet"
+        >{{ pointsPerSet }}</button>
       </div>
 
       <!-- Set label -->
@@ -93,6 +99,11 @@ function confirm() {
 
       <!-- Team B set score -->
       <div class="flex items-center justify-center gap-1">
+        <button
+          class="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 font-bold text-sm hover:bg-amber-200 active:bg-amber-300 transition-colors"
+          :title="`Direkt auf ${pointsPerSet} setzen`"
+          @click="s.scoreB = pointsPerSet"
+        >{{ pointsPerSet }}</button>
         <button
           class="w-10 h-10 rounded-xl bg-stone-100 text-stone-700 font-bold text-lg hover:bg-amber-100 active:bg-amber-200 transition-colors"
           @click="s.scoreB = clamp(s.scoreB - 1)"

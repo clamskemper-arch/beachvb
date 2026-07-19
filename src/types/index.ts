@@ -49,6 +49,7 @@ export interface Round {
 export interface TournamentConfig {
   teamSize: 2 | 3 | 4
   setsPerMatch: number
+  pointsPerSet: number
   minGamesPerPlayer: number
   courtCount: number
 }

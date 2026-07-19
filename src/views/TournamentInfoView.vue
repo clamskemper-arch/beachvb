@@ -68,6 +68,10 @@ function finishTournament() {
             <p class="text-xs text-stone-500 mt-1">Sätze pro Spiel</p>
           </div>
           <div class="bg-amber-50 rounded-xl p-3 text-center">
+            <p class="text-2xl font-bold text-amber-700">{{ config?.pointsPerSet ?? 21 }}</p>
+            <p class="text-xs text-stone-500 mt-1">Punkte pro Satz</p>
+          </div>
+          <div class="bg-amber-50 rounded-xl p-3 text-center">
             <p class="text-2xl font-bold text-amber-700">{{ config?.minGamesPerPlayer }}</p>
             <p class="text-xs text-stone-500 mt-1">Mindestspiele</p>
           </div>
