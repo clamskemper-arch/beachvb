@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import type { Round, Team, RoundID } from '../types'
+import type { Round, Team, RoundID, RoundStatus } from '../types'
 import { generateRound, createPairingHistory, recordMatchup } from '../algorithms/teamGenerator'
 import { usePlayerStore } from './player'
 import { useMatchStore } from './match'
@@ -31,32 +31,20 @@ export const useRoundStore = defineStore('rounds', {
   },
 
   actions: {
-    // Deletes any still-pending round and generates exactly one new one, based on
-    // the current roster and the pairing/sit-out history of finished (+ active) rounds.
-    schedulePendingRounds() {
+    // Generates one round with the given number/status from the current roster and
+    // the pairing/sit-out history of the finished (+ active) rounds still in state.
+    // Returns false without side effects if generation isn't possible right now.
+    createRound(roundNumber: number, status: RoundStatus): boolean {
       const playerStore = usePlayerStore()
       const matchStore = useMatchStore()
       const tournamentStore = useTournamentStore()
 
       const config = tournamentStore.config
-      if (!config) return
+      if (!config) return false
 
       const activePlayers = playerStore.activePlayers.map((p) => p.id)
-      if (activePlayers.length < config.teamSize * 2) return
+      if (activePlayers.length < config.teamSize * 2) return false
 
-      // Delete all existing pending rounds
-      Object.values(this.rounds)
-        .filter((r) => r.status === 'pending')
-        .forEach((r) => {
-          r.matchIds.forEach((mid) => matchStore.deleteMatch(mid))
-          Object.keys(this.teams).forEach((tid) => {
-            if (this.teams[tid].roundId === r.id) delete this.teams[tid]
-          })
-          tournamentStore.removeRound(r.id)
-          delete this.rounds[r.id]
-        })
-
-      // Build state from finished rounds
       const finishedRounds = Object.values(this.rounds)
         .filter((r) => r.status === 'finished')
         .sort((a, b) => a.number - b.number)
@@ -85,7 +73,6 @@ export const useRoundStore = defineStore('rounds', {
         })
 
       const lastSittingOut = finishedRounds[finishedRounds.length - 1]?.sittingOutPlayerIds ?? []
-      const roundNumber = finishedRounds.length + 1
 
       const genders: Record<string, 'M' | 'W' | null> = {}
       playerStore.activePlayers.forEach((p) => { genders[p.id] = p.gender })
@@ -116,15 +103,62 @@ export const useRoundStore = defineStore('rounds', {
       this.rounds[roundId] = {
         id: roundId,
         number: roundNumber,
-        status: 'pending',
+        status,
         matchIds,
         sittingOutPlayerIds: sittingOut,
         activePlayerSnapshot: activePlayers,
       }
       tournamentStore.addRound(roundId)
+      return true
+    },
 
-      // Activate first pending round if none is active
-      if (!this.currentRound) this.activateNextPending()
+    deleteRound(round: Round) {
+      const matchStore = useMatchStore()
+      const tournamentStore = useTournamentStore()
+
+      round.matchIds.forEach((mid) => matchStore.deleteMatch(mid))
+      Object.keys(this.teams).forEach((tid) => {
+        if (this.teams[tid].roundId === round.id) delete this.teams[tid]
+      })
+      tournamentStore.removeRound(round.id)
+      delete this.rounds[round.id]
+    },
+
+    // Deletes any still-pending round and generates exactly one new one.
+    schedulePendingRounds() {
+      const tournamentStore = useTournamentStore()
+      const playerStore = usePlayerStore()
+
+      const config = tournamentStore.config
+      if (!config) return
+      if (playerStore.activePlayers.length < config.teamSize * 2) return
+
+      Object.values(this.rounds)
+        .filter((r) => r.status === 'pending')
+        .forEach((r) => this.deleteRound(r))
+
+      const finishedCount = Object.values(this.rounds).filter((r) => r.status === 'finished').length
+      const created = this.createRound(finishedCount + 1, 'pending')
+
+      if (created && !this.currentRound) this.activateNextPending()
+    },
+
+    // Deletes the currently active round (including any already-entered scores)
+    // and regenerates it fresh under the same round number.
+    regenerateCurrentRound() {
+      const current = this.currentRound
+      if (!current) return
+
+      const tournamentStore = useTournamentStore()
+      const playerStore = usePlayerStore()
+
+      const config = tournamentStore.config
+      if (!config) return
+      if (playerStore.activePlayers.length < config.teamSize * 2) return
+
+      const roundNumber = current.number
+      this.deleteRound(current)
+      this.createRound(roundNumber, 'active')
     },
 
     activateNextPending() {

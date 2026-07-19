@@ -20,7 +20,9 @@
 `finishRound()` wird nur aufgerufen wenn `round.status === 'active'`. Verhindert, dass das nachträgliche Bearbeiten alter Spielergebnisse eine neue Runde auslöst.
 
 ### Runden-Generierung
-`schedulePendingRounds()` erzeugt immer nur **eine** Runde (nicht mehr im Batch), basierend auf dem aktuellen Roster und der Historie aus `finished`-/`active`-Runden. `finishRound()` generiert danach automatisch die nächste Runde, solange nicht jeder aktive Spieler `minGamesPerPlayer` Spiele erreicht hat; ist das Ziel erreicht, landet man auf dem "Turnier beenden oder Weitere Runde generieren"-Screen. Pro Runde maximal `courtCount` Spiele. Roster-Änderungen (Spieler hinzufügen/deaktivieren in `PlayerManagementView.vue`) rufen `schedulePendingRounds()` direkt auf, um die (höchstens eine) offene Runde neu zu berechnen.
+`schedulePendingRounds()` erzeugt immer nur **eine** Runde (nicht mehr im Batch), basierend auf dem aktuellen Roster und der Historie aus `finished`-/`active`-Runden (siehe `createRound()`/`deleteRound()` in `round.ts`, gemeinsam genutzt von `schedulePendingRounds()` und `regenerateCurrentRound()`). `finishRound()` generiert danach automatisch die nächste Runde, solange nicht jeder aktive Spieler `minGamesPerPlayer` Spiele erreicht hat; ist das Ziel erreicht, landet man auf dem "Turnier beenden oder Weitere Runde generieren"-Screen. Pro Runde maximal `courtCount` Spiele.
+
+Roster-Änderungen (Spieler hinzufügen/aktivieren/deaktivieren in `PlayerManagementView.vue`) lösen **keine** automatische Rundenneuberechnung mehr aus — Änderungen wirken sich erst ab der nächsten neu berechneten Runde aus. Der Button "Aktuelle Runde neu berechnen" im Reiter `RoundsView.vue` (Rundenverlauf; mit Bestätigungsdialog, da bereits eingetragene Ergebnisse verloren gehen, und `AppToast`-Feedback nach Abschluss) löscht gezielt die aktuell **laufende** Runde und berechnet sie unter derselben Rundennummer neu (`roundStore.regenerateCurrentRound()`).
 
 ### Fairness bei Sit-outs
 Spieler mit den wenigsten bisherigen Pausen kommen zuerst dran (Sit-out-Counter wird getrackt). Bei Gleichstand zufälliger Tiebreak.

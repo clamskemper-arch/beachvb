@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import AppBadge from '../components/ui/AppBadge.vue'
+import AppButton from '../components/ui/AppButton.vue'
+import AppModal from '../components/ui/AppModal.vue'
+import AppToast from '../components/ui/AppToast.vue'
 import ScoreEntryCard from '../components/score/ScoreEntryCard.vue'
 import { useRoundStore } from '../stores/round'
 import { useMatchStore } from '../stores/match'
@@ -12,6 +15,9 @@ const playerStore = usePlayerStore()
 
 const expanded = ref<Set<string>>(new Set())
 const editingMatchId = ref<string | null>(null)
+const showRegenerateConfirm = ref(false)
+const showRegenerateToast = ref(false)
+let toastTimeout: ReturnType<typeof setTimeout> | undefined
 
 function toggle(id: string) {
   if (expanded.value.has(id)) expanded.value.delete(id)
@@ -27,11 +33,29 @@ function teamNames(teamId: string): string {
 function toggleEdit(matchId: string) {
   editingMatchId.value = editingMatchId.value === matchId ? null : matchId
 }
+
+function regenerateCurrentRound() {
+  roundStore.regenerateCurrentRound()
+  showRegenerateConfirm.value = false
+
+  clearTimeout(toastTimeout)
+  showRegenerateToast.value = true
+  toastTimeout = setTimeout(() => { showRegenerateToast.value = false }, 3000)
+}
 </script>
 
 <template>
   <div class="flex flex-col gap-3">
     <h2 class="text-lg font-bold text-stone-800">Rundenverlauf</h2>
+
+    <AppButton
+      v-if="roundStore.currentRound"
+      variant="secondary"
+      full-width
+      @click="showRegenerateConfirm = true"
+    >
+      Aktuelle Runde neu berechnen
+    </AppButton>
 
     <div v-if="roundStore.all.length === 0" class="text-center py-12 text-stone-400">
       Noch keine Runden gespielt
@@ -108,4 +132,16 @@ function toggleEdit(matchId: string) {
       </div>
     </div>
   </div>
+
+  <AppModal title="Runde neu berechnen?" :show="showRegenerateConfirm" @close="showRegenerateConfirm = false">
+    <p class="text-stone-600 text-sm">
+      Die aktuelle Runde wird entfernt und mit neuen Teams/Paarungen neu berechnet. Bereits eingetragene Ergebnisse dieser Runde gehen dabei verloren.
+    </p>
+    <template #footer>
+      <AppButton variant="secondary" full-width @click="showRegenerateConfirm = false">Abbrechen</AppButton>
+      <AppButton variant="danger" full-width @click="regenerateCurrentRound">Neu berechnen</AppButton>
+    </template>
+  </AppModal>
+
+  <AppToast :show="showRegenerateToast" message="Runde wurde neu erstellt" />
 </template>

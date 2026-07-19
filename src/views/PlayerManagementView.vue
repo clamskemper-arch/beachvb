@@ -19,17 +19,6 @@ const confirmDeleteId = ref<string | null>(null)
 const confirmDeleteName = () =>
   confirmDeleteId.value ? playerStore.byId(confirmDeleteId.value)?.name ?? '' : ''
 
-function regeneratePendingRounds() {
-  // Only recompute an already-queued round. If there's none (either the
-  // current round is still being played and no next round was queued yet,
-  // or the tournament is resting because the target was reached), a roster
-  // change shouldn't spawn a new round on its own — the next round is
-  // computed fresh once it's actually needed.
-  if (roundStore.pendingRounds.length > 0) {
-    roundStore.schedulePendingRounds()
-  }
-}
-
 function addPlayer() {
   const n = newName.value.trim()
   if (!n) return
@@ -37,21 +26,10 @@ function addPlayer() {
   const player = playerStore.add(n, currentRoundNumber, newGender.value)
   tournamentStore.addPlayer(player.id)
   newName.value = ''
-  regeneratePendingRounds()
 }
 
 function onKeydown(e: KeyboardEvent) {
   if (e.key === 'Enter') addPlayer()
-}
-
-function toggleActive(id: string) {
-  playerStore.toggleActive(id)
-  if (!playerStore.byId(id)?.active) regeneratePendingRounds()
-}
-
-function deactivateAll() {
-  playerStore.setAllActive(false)
-  regeneratePendingRounds()
 }
 
 function removePlayer() {
@@ -89,7 +67,7 @@ function removePlayer() {
         <AppButton :disabled="!newName.trim()" @click="addPlayer">Hinzufügen</AppButton>
       </div>
       <p class="text-xs text-stone-400 mt-2">
-        Noch ausstehende Runden werden automatisch neu berechnet.
+        Neue Spieler werden erst ab der nächsten neu berechneten Runde berücksichtigt.
       </p>
     </AppCard>
 
@@ -100,13 +78,13 @@ function removePlayer() {
       <template v-else>
         <div class="flex gap-2 mb-3">
           <AppButton variant="secondary" class="flex-1" @click="playerStore.setAllActive(true)">Alle aktivieren</AppButton>
-          <AppButton variant="secondary" class="flex-1" @click="deactivateAll">Alle deaktivieren</AppButton>
+          <AppButton variant="secondary" class="flex-1" @click="playerStore.setAllActive(false)">Alle deaktivieren</AppButton>
         </div>
         <PlayerToggleRow
           v-for="player in playerStore.all"
           :key="player.id"
           :player="player"
-          @toggle="toggleActive"
+          @toggle="playerStore.toggleActive"
           @set-gender="playerStore.setGender"
           @rename="playerStore.rename"
           @remove="confirmDeleteId = $event"
