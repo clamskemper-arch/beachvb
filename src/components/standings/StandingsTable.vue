@@ -3,6 +3,7 @@ import AppBadge from '../ui/AppBadge.vue'
 import type { PlayerStats } from '../../types'
 
 defineProps<{ stats: PlayerStats[] }>()
+const emit = defineEmits<{ hide: [playerId: string] }>()
 
 function fmtRatio(r: number): string {
   return (r * 100).toFixed(1) + ' %'
@@ -20,6 +21,7 @@ function fmtRatio(r: number): string {
           <th class="py-2 px-2 text-center" title="Sätze gewonnen : verloren">Sätze</th>
           <th class="py-2 px-2 text-center" title="Punkte +/-">+/-</th>
           <th class="py-2 px-2 text-center font-semibold text-stone-700" title="Gewinnquotient (Sätze gewonnen / Sätze gespielt)">GQ</th>
+          <th class="py-2 px-2 text-center"></th>
         </tr>
       </thead>
       <tbody>
@@ -45,6 +47,18 @@ function fmtRatio(r: number): string {
           </td>
           <td class="py-3 px-2 text-center font-semibold" :class="s.setsPlayed === 0 ? 'text-stone-400' : 'text-amber-600'">
             {{ s.setsPlayed === 0 ? '—' : fmtRatio(s.winRatio) }}
+          </td>
+          <td class="py-3 px-2 text-center">
+            <button
+              class="w-8 h-8 flex items-center justify-center rounded-lg text-stone-400 hover:text-amber-600 hover:bg-amber-50 transition-colors"
+              title="Spieler aus Tabelle ausblenden"
+              @click="emit('hide', s.playerId)"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M10 3C5.5 3 1.7 5.9.5 10c1.2 4.1 5 7 9.5 7s8.3-2.9 9.5-7C18.3 5.9 14.5 3 10 3zm0 11.5A4.5 4.5 0 1110 5.5a4.5 4.5 0 010 9z" />
+                <path d="M10 8a2 2 0 100 4 2 2 0 000-4z" />
+              </svg>
+            </button>
           </td>
         </tr>
       </tbody>

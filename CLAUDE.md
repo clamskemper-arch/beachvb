@@ -44,6 +44,7 @@ Beim Pairen von Teams wird versucht, gleich viele Frauen und Männer in gegenüb
 ```ts
 // Backward-Compat: match.sets ?? [] für alte localStorage-Daten ohne sets-Feld
 // config?.setsPerMatch ?? 2 für alte Turnierdaten
+// player.hiddenInStandings ?? false für alte Spielerdaten ohne dieses Feld
 
 interface SetResult { scoreA: number; scoreB: number }
 interface Match {

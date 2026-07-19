@@ -26,6 +26,7 @@ export const usePlayerStore = defineStore('players', {
         active: true,
         joinedAfterRound,
         gender,
+        hiddenInStandings: false,
       }
       this.players[player.id] = player
       return player
@@ -59,6 +60,11 @@ export const usePlayerStore = defineStore('players', {
 
     setAllActive(active: boolean) {
       Object.values(this.players).forEach((p) => { p.active = active })
+    },
+
+    setHiddenInStandings(id: PlayerID, hidden: boolean) {
+      const p = this.players[id]
+      if (p) p.hiddenInStandings = hidden
     },
 
     reset() {

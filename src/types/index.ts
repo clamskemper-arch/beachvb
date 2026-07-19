@@ -10,6 +10,7 @@ export interface Player {
   active: boolean
   joinedAfterRound: number | null
   gender: 'M' | 'W' | null
+  hiddenInStandings: boolean
 }
 
 export interface Team {
@@ -80,4 +81,5 @@ export interface PlayerStats {
   sitOuts: number
   joinedAfterRound: number | null
   active: boolean
+  hiddenInStandings: boolean
 }

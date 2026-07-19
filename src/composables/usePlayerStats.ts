@@ -85,6 +85,7 @@ export function usePlayerStats() {
         sitOuts: sitOutCounts.value[player.id] ?? 0,
         joinedAfterRound: player.joinedAfterRound,
         active: player.active,
+        hiddenInStandings: player.hiddenInStandings ?? false,
       }
     })
   })
