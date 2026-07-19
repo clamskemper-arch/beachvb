@@ -31,7 +31,9 @@ export const useRoundStore = defineStore('rounds', {
   },
 
   actions: {
-    schedulePendingRounds(extend = false) {
+    // Deletes any still-pending round and generates exactly one new one, based on
+    // the current roster and the pairing/sit-out history of finished (+ active) rounds.
+    schedulePendingRounds() {
       const playerStore = usePlayerStore()
       const matchStore = useMatchStore()
       const tournamentStore = useTournamentStore()
@@ -59,25 +61,15 @@ export const useRoundStore = defineStore('rounds', {
         .filter((r) => r.status === 'finished')
         .sort((a, b) => a.number - b.number)
 
-      const gamesPlayed: Record<string, number> = {}
       const sitOutCounts: Record<string, number> = {}
-
       finishedRounds.forEach((r) => {
-        const sittingSet = new Set(r.sittingOutPlayerIds)
-        r.activePlayerSnapshot.forEach((pid) => {
-          if (!sittingSet.has(pid)) gamesPlayed[pid] = (gamesPlayed[pid] ?? 0) + 1
-        })
         r.sittingOutPlayerIds.forEach((pid) => {
           sitOutCounts[pid] = (sitOutCounts[pid] ?? 0) + 1
         })
       })
 
-      activePlayers.forEach((pid) => { if (!(pid in gamesPlayed)) gamesPlayed[pid] = 0 })
-
-      const base = Math.max(1, config.minGamesPerPlayer)
-
       // Build teammate/opponent history from finished and the currently active round,
-      // so newly generated rounds avoid repeating past pairings where possible.
+      // so the newly generated round avoids repeating past pairings where possible.
       const history = createPairingHistory()
       Object.values(this.rounds)
         .filter((r) => r.status === 'finished' || r.status === 'active')
@@ -92,60 +84,44 @@ export const useRoundStore = defineStore('rounds', {
           })
         })
 
-      let lastSittingOut = finishedRounds[finishedRounds.length - 1]?.sittingOutPlayerIds ?? []
-      let roundNumber = finishedRounds.length + 1
+      const lastSittingOut = finishedRounds[finishedRounds.length - 1]?.sittingOutPlayerIds ?? []
+      const roundNumber = finishedRounds.length + 1
 
-      // extend: append exactly one more round (sit-out/games fairness carries over from finished rounds)
-      // otherwise: generate rounds until all active players have reached the minimum
-      const maxIterations = extend ? 1 : 100
-      for (let i = 0; i < maxIterations; i++) {
-        if (!extend && activePlayers.every((pid) => (gamesPlayed[pid] ?? 0) >= base)) break
+      const genders: Record<string, 'M' | 'W' | null> = {}
+      playerStore.activePlayers.forEach((p) => { genders[p.id] = p.gender })
 
-        const genders: Record<string, 'M' | 'W' | null> = {}
-        playerStore.activePlayers.forEach((p) => { genders[p.id] = p.gender })
+      const { teams: teamGroups, sittingOut } = generateRound(
+        activePlayers,
+        config.teamSize,
+        sitOutCounts,
+        lastSittingOut,
+        genders,
+        config.courtCount,
+        history,
+      )
 
-        const { teams: teamGroups, sittingOut } = generateRound(
-          activePlayers,
-          config.teamSize,
-          sitOutCounts,
-          lastSittingOut,
-          genders,
-          config.courtCount,
-          history,
-        )
+      const roundId = crypto.randomUUID()
+      const createdTeams: Team[] = teamGroups.map((playerIds) => ({
+        id: crypto.randomUUID(),
+        roundId,
+        playerIds,
+      }))
+      createdTeams.forEach((t) => { this.teams[t.id] = t })
 
-        const sittingSet = new Set(sittingOut)
-        activePlayers.forEach((pid) => {
-          if (!sittingSet.has(pid)) gamesPlayed[pid] = (gamesPlayed[pid] ?? 0) + 1
-        })
-        sittingOut.forEach((pid) => { sitOutCounts[pid] = (sitOutCounts[pid] ?? 0) + 1 })
-        lastSittingOut = sittingOut
-
-        const roundId = crypto.randomUUID()
-        const createdTeams: Team[] = teamGroups.map((playerIds) => ({
-          id: crypto.randomUUID(),
-          roundId,
-          playerIds,
-        }))
-        createdTeams.forEach((t) => { this.teams[t.id] = t })
-
-        const matchIds: string[] = []
-        for (let j = 0; j + 1 < createdTeams.length; j += 2) {
-          matchIds.push(matchStore.create(roundId, createdTeams[j].id, createdTeams[j + 1].id))
-          recordMatchup(history, createdTeams[j].playerIds, createdTeams[j + 1].playerIds)
-        }
-
-        this.rounds[roundId] = {
-          id: roundId,
-          number: roundNumber,
-          status: 'pending',
-          matchIds,
-          sittingOutPlayerIds: sittingOut,
-          activePlayerSnapshot: activePlayers,
-        }
-        tournamentStore.addRound(roundId)
-        roundNumber++
+      const matchIds: string[] = []
+      for (let j = 0; j + 1 < createdTeams.length; j += 2) {
+        matchIds.push(matchStore.create(roundId, createdTeams[j].id, createdTeams[j + 1].id))
       }
+
+      this.rounds[roundId] = {
+        id: roundId,
+        number: roundNumber,
+        status: 'pending',
+        matchIds,
+        sittingOutPlayerIds: sittingOut,
+        activePlayerSnapshot: activePlayers,
+      }
+      tournamentStore.addRound(roundId)
 
       // Activate first pending round if none is active
       if (!this.currentRound) this.activateNextPending()
@@ -170,6 +146,30 @@ export const useRoundStore = defineStore('rounds', {
       const hasPending = Object.values(this.rounds).some((r) => r.status === 'pending')
       if (hasPending) {
         this.activateNextPending()
+        return
+      }
+
+      // No round queued up: generate the next one automatically, unless every
+      // active player has already reached the minimum games target.
+      const playerStore = usePlayerStore()
+      const tournamentStore = useTournamentStore()
+      const config = tournamentStore.config
+      const activePlayers = playerStore.activePlayers.map((p) => p.id)
+      const base = Math.max(1, config?.minGamesPerPlayer ?? 1)
+
+      const gamesPlayed: Record<string, number> = {}
+      Object.values(this.rounds)
+        .filter((r) => r.status === 'finished')
+        .forEach((r) => {
+          const sittingSet = new Set(r.sittingOutPlayerIds)
+          r.activePlayerSnapshot.forEach((pid) => {
+            if (!sittingSet.has(pid)) gamesPlayed[pid] = (gamesPlayed[pid] ?? 0) + 1
+          })
+        })
+      const targetReached = activePlayers.every((pid) => (gamesPlayed[pid] ?? 0) >= base)
+
+      if (config && !targetReached) {
+        this.schedulePendingRounds()
       } else {
         router.push('/tournament/active')
       }

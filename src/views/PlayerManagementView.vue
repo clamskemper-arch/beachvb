@@ -20,7 +20,14 @@ const confirmDeleteName = () =>
   confirmDeleteId.value ? playerStore.byId(confirmDeleteId.value)?.name ?? '' : ''
 
 function regeneratePendingRounds() {
-  if (roundStore.all.length > 0) roundStore.schedulePendingRounds()
+  // Only recompute an already-queued round. If there's none (either the
+  // current round is still being played and no next round was queued yet,
+  // or the tournament is resting because the target was reached), a roster
+  // change shouldn't spawn a new round on its own — the next round is
+  // computed fresh once it's actually needed.
+  if (roundStore.pendingRounds.length > 0) {
+    roundStore.schedulePendingRounds()
+  }
 }
 
 function addPlayer() {

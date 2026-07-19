@@ -55,7 +55,7 @@ const allReachedMinGames = computed(() => {
       <div v-if="allReachedMinGames" class="rounded-xl bg-green-50 border border-green-200 px-4 py-4 flex flex-col gap-3">
         <p class="text-green-800 font-semibold text-center">Alle Spieler haben die Mindestspielzahl erreicht</p>
         <p class="text-green-700 text-sm text-center">Das Turnier kann beendet oder mit weiteren Runden fortgesetzt werden.</p>
-        <AppButton size="lg" full-width :disabled="!canGenerate" @click="roundStore.schedulePendingRounds(true)">
+        <AppButton size="lg" full-width :disabled="!canGenerate" @click="roundStore.schedulePendingRounds()">
           Weitere Runde generieren
         </AppButton>
       </div>

@@ -20,7 +20,7 @@
 `finishRound()` wird nur aufgerufen wenn `round.status === 'active'`. Verhindert, dass das nachträgliche Bearbeiten alter Spielergebnisse eine neue Runde auslöst.
 
 ### Runden-Generierung
-Alle Runden werden beim Start der **ersten** Runde erzeugt (nicht beim Turnierstart). Anzahl Runden = genug, damit jeder Spieler `minGamesPerPlayer` Spiele erreicht. Pro Runde maximal `courtCount` Spiele.
+`schedulePendingRounds()` erzeugt immer nur **eine** Runde (nicht mehr im Batch), basierend auf dem aktuellen Roster und der Historie aus `finished`-/`active`-Runden. `finishRound()` generiert danach automatisch die nächste Runde, solange nicht jeder aktive Spieler `minGamesPerPlayer` Spiele erreicht hat; ist das Ziel erreicht, landet man auf dem "Turnier beenden oder Weitere Runde generieren"-Screen. Pro Runde maximal `courtCount` Spiele. Roster-Änderungen (Spieler hinzufügen/deaktivieren in `PlayerManagementView.vue`) rufen `schedulePendingRounds()` direkt auf, um die (höchstens eine) offene Runde neu zu berechnen.
 
 ### Fairness bei Sit-outs
 Spieler mit den wenigsten bisherigen Pausen kommen zuerst dran (Sit-out-Counter wird getrackt). Bei Gleichstand zufälliger Tiebreak.
@@ -29,7 +29,7 @@ Spieler mit den wenigsten bisherigen Pausen kommen zuerst dran (Sit-out-Counter 
 Beim Pairen von Teams wird versucht, gleich viele Frauen und Männer in gegenüberstehenden Teams zu haben.
 
 ### Teammate/Gegner-Fairness (`PairingHistory` in `teamGenerator.ts`)
-`round.ts` baut vor jeder Rundengenerierung eine `PairingHistory` (Teammate-/Gegner-Zählung pro Spielerpaar) aus allen `finished`- und der aktuellen `active`-Runde. `formBalancedTeams()` füllt Team-Slots danach greedy: für jeden Slot wird der verbleibende Kandidat gewählt, der am wenigsten oft mit den aktuellen Team-Mitgliedern gespielt bzw. gegen das aktuelle Gegner-Team gespielt hat. Bei Mehrfachrunden-Generierung in einem Aufruf (Turnierstart, "Weitere Runde") wird die History nach jeder erzeugten Runde per `recordMatchup()` aktualisiert, damit auch Runden innerhalb desselben Batches sich nicht wiederholen.
+`round.ts` baut vor jeder Rundengenerierung eine `PairingHistory` (Teammate-/Gegner-Zählung pro Spielerpaar) aus allen `finished`- und der aktuellen `active`-Runde. `formBalancedTeams()` füllt Team-Slots danach greedy: für jeden Slot wird der verbleibende Kandidat gewählt, der am wenigsten oft mit den aktuellen Team-Mitgliedern gespielt bzw. gegen das aktuelle Gegner-Team gespielt hat.
 
 ## Bekannte Einschränkungen dieser Umgebung
 
