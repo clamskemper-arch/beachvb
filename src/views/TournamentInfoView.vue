@@ -1,5 +1,8 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
+import { useRouter } from 'vue-router'
+import AppButton from '../components/ui/AppButton.vue'
+import AppModal from '../components/ui/AppModal.vue'
 import { useTournamentStore } from '../stores/tournament'
 import { usePlayerStore } from '../stores/player'
 import { useRoundStore } from '../stores/round'
@@ -7,6 +10,7 @@ import { useRoundStore } from '../stores/round'
 const tournamentStore = useTournamentStore()
 const playerStore = usePlayerStore()
 const roundStore = useRoundStore()
+const router = useRouter()
 
 const tournament = computed(() => tournamentStore.tournament)
 const config = computed(() => tournamentStore.config)
@@ -19,6 +23,13 @@ const menCount = computed(() => allPlayers.value.filter((p) => p.gender === 'M')
 const finishedRounds = computed(() => roundStore.all.filter((r) => r.status === 'finished').length)
 const pendingRounds = computed(() => roundStore.all.filter((r) => r.status === 'pending').length)
 const totalRounds = computed(() => roundStore.all.length)
+
+const showFinishConfirm = ref(false)
+
+function finishTournament() {
+  tournamentStore.finish()
+  router.push('/setup')
+}
 </script>
 
 <template>
@@ -112,6 +123,18 @@ const totalRounds = computed(() => roundStore.all.length)
           </div>
         </div>
       </div>
+
+      <AppButton variant="ghost" full-width @click="showFinishConfirm = true">
+        Turnier beenden
+      </AppButton>
     </template>
   </div>
+
+  <AppModal title="Turnier beenden?" :show="showFinishConfirm" @close="showFinishConfirm = false">
+    <p class="text-stone-600 text-sm">Das Turnier wird abgeschlossen und alle Daten werden zurückgesetzt.</p>
+    <template #footer>
+      <AppButton variant="secondary" full-width @click="showFinishConfirm = false">Abbrechen</AppButton>
+      <AppButton variant="danger" full-width @click="finishTournament">Beenden</AppButton>
+    </template>
+  </AppModal>
 </template>

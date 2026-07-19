@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import AppButton from '../components/ui/AppButton.vue'
-import AppModal from '../components/ui/AppModal.vue'
 import MatchCard from '../components/round/MatchCard.vue'
 import SittingOutPanel from '../components/round/SittingOutPanel.vue'
 import { useRoundStore } from '../stores/round'
@@ -9,16 +8,12 @@ import { useMatchStore } from '../stores/match'
 import { usePlayerStore } from '../stores/player'
 import { useTournamentStore } from '../stores/tournament'
 import { usePlayerStats } from '../composables/usePlayerStats'
-import { useRouter } from 'vue-router'
 
 const roundStore = useRoundStore()
 const matchStore = useMatchStore()
 const playerStore = usePlayerStore()
 const tournamentStore = useTournamentStore()
-const router = useRouter()
 const { sorted } = usePlayerStats()
-
-const showFinishConfirm = ref(false)
 
 const currentRound = computed(() => roundStore.currentRound)
 const pendingCount = computed(() => roundStore.pendingRounds.length)
@@ -35,11 +30,6 @@ const allReachedMinGames = computed(() => {
   if (minGames.value === 0) return false
   return sorted.value.filter((s) => s.active).every((s) => s.gamesPlayed >= minGames.value)
 })
-
-function finishTournament() {
-  tournamentStore.finish()
-  router.push('/setup')
-}
 </script>
 
 <template>
@@ -70,13 +60,10 @@ function finishTournament() {
         </AppButton>
       </div>
       <div v-else class="rounded-xl bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-700 text-center">
-        Keine weiteren Runden geplant. Runden neu berechnen oder Turnier beenden.
+        Keine weiteren Runden geplant. Runden neu berechnen oder Turnier im Info-Tab beenden.
       </div>
       <AppButton variant="secondary" full-width :disabled="!canGenerate" @click="roundStore.schedulePendingRounds()">
         Runden neu berechnen
-      </AppButton>
-      <AppButton variant="ghost" full-width @click="showFinishConfirm = true">
-        Turnier beenden
       </AppButton>
     </div>
 
@@ -106,19 +93,8 @@ function finishTournament() {
         <AppButton variant="secondary" full-width :disabled="!canGenerate" @click="roundStore.schedulePendingRounds()">
           Runden neu berechnen
         </AppButton>
-        <AppButton variant="ghost" full-width @click="showFinishConfirm = true">
-          Turnier beenden
-        </AppButton>
       </div>
     </template>
 
   </div>
-
-  <AppModal title="Turnier beenden?" :show="showFinishConfirm" @close="showFinishConfirm = false">
-    <p class="text-stone-600 text-sm">Das Turnier wird abgeschlossen und alle Daten werden zurückgesetzt.</p>
-    <template #footer>
-      <AppButton variant="secondary" full-width @click="showFinishConfirm = false">Abbrechen</AppButton>
-      <AppButton variant="danger" full-width @click="finishTournament">Beenden</AppButton>
-    </template>
-  </AppModal>
 </template>

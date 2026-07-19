@@ -19,6 +19,10 @@ const confirmDeleteId = ref<string | null>(null)
 const confirmDeleteName = () =>
   confirmDeleteId.value ? playerStore.byId(confirmDeleteId.value)?.name ?? '' : ''
 
+function regeneratePendingRounds() {
+  if (roundStore.all.length > 0) roundStore.schedulePendingRounds()
+}
+
 function addPlayer() {
   const n = newName.value.trim()
   if (!n) return
@@ -26,10 +30,21 @@ function addPlayer() {
   const player = playerStore.add(n, currentRoundNumber, newGender.value)
   tournamentStore.addPlayer(player.id)
   newName.value = ''
+  regeneratePendingRounds()
 }
 
 function onKeydown(e: KeyboardEvent) {
   if (e.key === 'Enter') addPlayer()
+}
+
+function toggleActive(id: string) {
+  playerStore.toggleActive(id)
+  if (!playerStore.byId(id)?.active) regeneratePendingRounds()
+}
+
+function deactivateAll() {
+  playerStore.setAllActive(false)
+  regeneratePendingRounds()
 }
 
 function removePlayer() {
@@ -67,7 +82,7 @@ function removePlayer() {
         <AppButton :disabled="!newName.trim()" @click="addPlayer">Hinzufügen</AppButton>
       </div>
       <p class="text-xs text-stone-400 mt-2">
-        Neue Spieler werden ab der nächsten Runde berücksichtigt.
+        Noch ausstehende Runden werden automatisch neu berechnet.
       </p>
     </AppCard>
 
@@ -78,13 +93,13 @@ function removePlayer() {
       <template v-else>
         <div class="flex gap-2 mb-3">
           <AppButton variant="secondary" class="flex-1" @click="playerStore.setAllActive(true)">Alle aktivieren</AppButton>
-          <AppButton variant="secondary" class="flex-1" @click="playerStore.setAllActive(false)">Alle deaktivieren</AppButton>
+          <AppButton variant="secondary" class="flex-1" @click="deactivateAll">Alle deaktivieren</AppButton>
         </div>
         <PlayerToggleRow
           v-for="player in playerStore.all"
           :key="player.id"
           :player="player"
-          @toggle="playerStore.toggleActive"
+          @toggle="toggleActive"
           @set-gender="playerStore.setGender"
           @rename="playerStore.rename"
           @remove="confirmDeleteId = $event"
