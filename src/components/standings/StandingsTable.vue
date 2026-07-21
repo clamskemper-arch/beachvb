@@ -3,7 +3,7 @@ import AppBadge from '../ui/AppBadge.vue'
 import type { PlayerStats } from '../../types'
 
 defineProps<{ stats: PlayerStats[] }>()
-const emit = defineEmits<{ hide: [playerId: string] }>()
+const emit = defineEmits<{ hide: [playerId: string]; select: [playerId: string] }>()
 
 function fmtRatio(r: number): string {
   return (r * 100).toFixed(1) + ' %'
@@ -32,7 +32,12 @@ function fmtRatio(r: number): string {
         >
           <td class="py-3 px-2 text-stone-400 font-medium">{{ i + 1 }}</td>
           <td class="py-3 px-2">
-            <span class="font-semibold text-stone-800">{{ s.name }}</span>
+            <button
+              type="button"
+              class="font-semibold text-stone-800 text-left hover:text-amber-600 transition-colors"
+              title="Spiele anzeigen"
+              @click="emit('select', s.playerId)"
+            >{{ s.name }}</button>
             <AppBadge v-if="!s.active" variant="muted" class="ml-2">Inaktiv</AppBadge>
             <AppBadge v-if="s.joinedAfterRound !== null" variant="info" class="ml-1">ab R{{ s.joinedAfterRound + 1 }}</AppBadge>
           </td>

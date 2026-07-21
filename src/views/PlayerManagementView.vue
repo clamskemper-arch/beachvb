@@ -5,6 +5,7 @@ import AppCard from '../components/ui/AppCard.vue'
 import AppModal from '../components/ui/AppModal.vue'
 import AppToast from '../components/ui/AppToast.vue'
 import PlayerToggleRow from '../components/players/PlayerToggleRow.vue'
+import PlayerMatchesModal from '../components/players/PlayerMatchesModal.vue'
 import { usePlayerStore } from '../stores/player'
 import { useTournamentStore } from '../stores/tournament'
 import { useRoundStore } from '../stores/round'
@@ -16,6 +17,7 @@ const roundStore = useRoundStore()
 const newName = ref('')
 const newGender = ref<'M' | 'W'>('W')
 const confirmDeleteId = ref<string | null>(null)
+const viewMatchesPlayerId = ref<string | null>(null)
 const showMenu = ref(false)
 const showRegenerateConfirm = ref(false)
 const showRegenerateToast = ref(false)
@@ -152,6 +154,7 @@ function regenerateCurrentRound() {
           @set-gender="playerStore.setGender"
           @rename="playerStore.rename"
           @remove="confirmDeleteId = $event"
+          @view="viewMatchesPlayerId = $event"
         />
       </template>
     </AppCard>
@@ -177,5 +180,7 @@ function regenerateCurrentRound() {
     </AppModal>
 
     <AppToast :show="showRegenerateToast" message="Runde wurde neu erstellt" />
+
+    <PlayerMatchesModal :player-id="viewMatchesPlayerId" @close="viewMatchesPlayerId = null" />
   </div>
 </template>

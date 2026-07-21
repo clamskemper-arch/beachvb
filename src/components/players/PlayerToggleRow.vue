@@ -4,7 +4,7 @@ import AppBadge from '../ui/AppBadge.vue'
 import type { Player } from '../../types'
 
 const props = defineProps<{ player: Player }>()
-const emit = defineEmits<{ toggle: [id: string]; remove: [id: string]; setGender: [id: string, gender: 'M' | 'W' | null]; rename: [id: string, name: string] }>()
+const emit = defineEmits<{ toggle: [id: string]; remove: [id: string]; setGender: [id: string, gender: 'M' | 'W' | null]; rename: [id: string, name: string]; view: [id: string] }>()
 
 const editing = ref(false)
 const editValue = ref('')
@@ -47,9 +47,19 @@ function cancelEdit() {
         <button
           type="button"
           :class="['font-medium text-left', !player.active ? 'text-stone-400 line-through' : 'text-stone-800']"
+          title="Spiele anzeigen"
+          @click="emit('view', player.id)"
+        >{{ player.name }}</button>
+        <button
+          type="button"
+          class="ml-1 text-stone-300 hover:text-amber-500 align-middle transition-colors"
           title="Namen bearbeiten"
           @click="startEdit"
-        >{{ player.name }}</button>
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 inline" viewBox="0 0 20 20" fill="currentColor">
+            <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+          </svg>
+        </button>
         <AppBadge v-if="player.joinedAfterRound !== null" variant="info" class="ml-2">
           ab Runde {{ player.joinedAfterRound + 1 }}
         </AppBadge>
