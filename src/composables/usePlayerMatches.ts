@@ -7,7 +7,9 @@ import { useMatchStore } from '../stores/match'
 export interface PlayerMatchEntry {
   matchId: string
   roundNumber: number
+  teammateIds: string[]
   teammates: string[]
+  opponentIds: string[]
   opponents: string[]
   sets: SetResult[]
   mySetsWon: number | null
@@ -15,6 +17,26 @@ export interface PlayerMatchEntry {
   result: 'win' | 'loss' | 'draw' | null
   finished: boolean
   amTeamA: boolean
+}
+
+export interface PairingCount {
+  playerId: string
+  name: string
+  count: number
+}
+
+function aggregateByPlayer(
+  entries: PlayerMatchEntry[],
+  pick: (entry: PlayerMatchEntry) => string[],
+  playerStore: ReturnType<typeof usePlayerStore>,
+): PairingCount[] {
+  const counts: Record<string, number> = {}
+  for (const entry of entries) {
+    for (const id of pick(entry)) counts[id] = (counts[id] ?? 0) + 1
+  }
+  return Object.entries(counts)
+    .map(([playerId, count]) => ({ playerId, name: playerStore.byId(playerId)?.name ?? '?', count }))
+    .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name))
 }
 
 export function usePlayerMatches(playerId: Ref<string | null>) {
@@ -42,10 +64,10 @@ export function usePlayerMatches(playerId: Ref<string | null>) {
 
         const myTeam = amTeamA ? teamA : teamB
         const oppTeam = amTeamA ? teamB : teamA
-        const teammates = myTeam.playerIds
-          .filter((id) => id !== pid)
-          .map((id) => playerStore.byId(id)?.name ?? '?')
-        const opponents = oppTeam.playerIds.map((id) => playerStore.byId(id)?.name ?? '?')
+        const teammateIds = myTeam.playerIds.filter((id) => id !== pid)
+        const teammates = teammateIds.map((id) => playerStore.byId(id)?.name ?? '?')
+        const opponentIds = oppTeam.playerIds
+        const opponents = opponentIds.map((id) => playerStore.byId(id)?.name ?? '?')
 
         const mySetsWon = match.finishedAt !== null ? (amTeamA ? match.scoreA : match.scoreB) : null
         const opponentSetsWon = match.finishedAt !== null ? (amTeamA ? match.scoreB : match.scoreA) : null
@@ -58,7 +80,9 @@ export function usePlayerMatches(playerId: Ref<string | null>) {
         entries.push({
           matchId,
           roundNumber: round.number,
+          teammateIds,
           teammates,
+          opponentIds,
           opponents,
           sets: match.sets ?? [],
           mySetsWon,
@@ -73,5 +97,8 @@ export function usePlayerMatches(playerId: Ref<string | null>) {
     return entries.sort((a, b) => b.roundNumber - a.roundNumber)
   })
 
-  return { matches }
+  const teammateCounts = computed(() => aggregateByPlayer(matches.value, (e) => e.teammateIds, playerStore))
+  const opponentCounts = computed(() => aggregateByPlayer(matches.value, (e) => e.opponentIds, playerStore))
+
+  return { matches, teammateCounts, opponentCounts }
 }
