@@ -59,12 +59,14 @@ const allReachedMinGames = computed(() => {
           Weitere Runde generieren
         </AppButton>
       </div>
-      <div v-else class="rounded-xl bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-700 text-center">
-        Keine weiteren Runden geplant. Nächste Runde generieren oder Turnier im Info-Tab beenden.
-      </div>
-      <AppButton variant="secondary" full-width :disabled="!canGenerate" @click="roundStore.schedulePendingRounds()">
-        Nächste Runde generieren
-      </AppButton>
+      <template v-else>
+        <div class="rounded-xl bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-700 text-center">
+          Keine weiteren Runden geplant. Nächste Runde generieren oder Turnier im Info-Tab beenden.
+        </div>
+        <AppButton variant="secondary" full-width :disabled="!canGenerate" @click="roundStore.schedulePendingRounds()">
+          Nächste Runde generieren
+        </AppButton>
+      </template>
     </div>
 
     <!-- Active round -->
